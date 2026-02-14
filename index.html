@@ -1,0 +1,5609 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Vokabeltrainer</title>
+<style>
+/* ── Reset & Base ─────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #faf7f2;
+  --bg-card: #ffffff;
+  --text: #1e1b18;
+  --text-light: #78716c;
+  --border: #e7e5e4;
+  --green: #22c55e;
+  --green-light: #dcfce7;
+  --orange: #f59e0b;
+  --orange-light: #fef3c7;
+  --red: #ef4444;
+  --red-light: #fee2e2;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.app {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  min-height: 100dvh;
+}
+
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.25s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Typography ───────────────────────────── */
+h1 { font-size: 1.6rem; font-weight: 700; }
+h2 { font-size: 1.3rem; font-weight: 700; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+
+/* ── Buttons ──────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 24px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 1rem; font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s;
+  -webkit-user-select: none; user-select: none;
+  min-height: 48px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--lang-color, #3b82f6); color: #fff; }
+.btn-primary:active { box-shadow: 0 0 0 4px rgba(59,130,246,0.25); }
+.btn-secondary { background: var(--bg-card); color: var(--text); border: 2px solid var(--border); }
+.btn-full { width: 100%; }
+
+/* ── Cards ────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* ── Back Button ──────────────────────────── */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none;
+  font-size: 1rem; color: var(--text-light);
+  cursor: pointer; padding: 8px 0;
+  min-height: 44px;
+}
+.back-btn::before { content: '\2190'; font-size: 1.2rem; }
+
+/* ══════════════════════════════════════════
+   SCREEN: HOME
+   ══════════════════════════════════════════ */
+
+.home-header {
+  text-align: center;
+  padding: 24px 0 16px;
+}
+.home-header h1 { margin-bottom: 4px; }
+.home-header .subtitle { color: var(--text-light); font-size: 0.9rem; }
+
+.streak-display {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 2px solid #fed7aa;
+  border-radius: var(--radius);
+  padding: 16px 24px;
+  margin: 16px 0;
+}
+.streak-fire { font-size: 2rem; }
+.streak-info { text-align: left; }
+.streak-count { font-size: 1.5rem; font-weight: 800; color: #ea580c; }
+.streak-label { font-size: 0.85rem; color: #9a3412; }
+
+.lang-cards { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+
+.lang-card {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 2px solid transparent;
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+.lang-card:active { transform: scale(0.98); box-shadow: var(--shadow-lg); }
+
+.lang-flag { font-size: 2.5rem; }
+.lang-info { flex: 1; }
+.lang-name { font-size: 1.1rem; font-weight: 700; }
+.lang-due {
+  display: inline-block;
+  margin-top: 4px; padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem; font-weight: 600;
+}
+.lang-arrow { font-size: 1.5rem; color: var(--text-light); }
+
+.home-bottom {
+  display: flex; gap: 10px; margin-top: 12px;
+}
+.home-bottom .btn { flex: 1; font-size: 0.9rem; }
+
+/* ══════════════════════════════════════════
+   SCREEN: CHAPTERS
+   ══════════════════════════════════════════ */
+
+.chapter-header {
+  display: flex; align-items: center; gap: 12px;
+  margin: 8px 0 20px;
+}
+.chapter-header .lang-flag { font-size: 1.8rem; }
+
+.chapter-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+.chapter-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+.chapter-item .info { flex: 1; }
+.chapter-item .name { font-weight: 600; font-size: 0.95rem; }
+.chapter-item .progress-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.chapter-item .progress-bar {
+  flex: 1; height: 6px; background: var(--border);
+  border-radius: 3px; overflow: hidden;
+}
+.chapter-item .progress-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.chapter-item .progress-pct { font-size: 0.75rem; color: var(--text-light); min-width: 32px; text-align: right; }
+
+/* Toggle Switch */
+.toggle {
+  position: relative; width: 48px; height: 28px;
+  background: #d6d3d1; border-radius: 14px;
+  cursor: pointer; transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--green); }
+.toggle::after {
+  content: '';
+  position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(20px); }
+
+.start-section {
+  text-align: center;
+  padding: 12px 0;
+}
+.start-section .due-info {
+  font-size: 0.9rem; color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+/* ══════════════════════════════════════════
+   SCREEN: LEARN
+   ══════════════════════════════════════════ */
+
+.learn-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.learn-progress-text { font-size: 0.9rem; font-weight: 600; }
+.learn-close {
+  background: none; border: none;
+  font-size: 1.5rem; color: var(--text-light);
+  cursor: pointer; padding: 4px; min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.learn-progress-bar {
+  height: 6px; background: var(--border); border-radius: 3px;
+  overflow: hidden; margin-bottom: 24px;
+}
+.learn-progress-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.35s ease;
+}
+
+.learn-direction {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+/* Flashcard with 3D flip */
+.flashcard-container {
+  perspective: 1000px;
+  margin-bottom: 24px;
+}
+
+.flashcard {
+  position: relative;
+  width: 100%;
+  min-height: 250px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+.flashcard.flipped { transform: rotateY(180deg); }
+
+.flashcard-face {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 32px 24px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.flashcard-front {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+}
+.flashcard-back {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  transform: rotateY(180deg);
+  visibility: hidden;
+}
+.flashcard.flipped .flashcard-back {
+  visibility: visible;
+  transition: visibility 0s linear 0.25s;
+}
+.flashcard:not(.flipped) .flashcard-back {
+  visibility: hidden;
+  transition: visibility 0s linear 0s;
+}
+
+.flashcard-word {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.flashcard-hint {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+.flashcard-box-info {
+  position: absolute; top: 12px; right: 14px;
+  font-size: 0.75rem; color: var(--text-light);
+  background: var(--bg); padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.tap-hint {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.rating-buttons {
+  display: none;
+  gap: 10px;
+}
+.rating-buttons.visible {
+  display: flex;
+}
+.rating-btn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  font-size: 0.85rem; font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+  min-height: 48px;
+}
+.rating-btn:active { transform: scale(0.95); }
+.rating-btn .emoji { font-size: 1.5rem; }
+.rating-btn.wrong { border-color: var(--red); background: var(--red-light); }
+.rating-btn.hard { border-color: var(--orange); background: var(--orange-light); }
+.rating-btn.correct { border-color: var(--green); background: var(--green-light); }
+.rating-btn.wrong:active { background: #fca5a5; }
+.rating-btn.hard:active { background: #fde68a; }
+.rating-btn.correct:active { background: #86efac; }
+
+/* ══════════════════════════════════════════
+   SCREEN: SUMMARY
+   ══════════════════════════════════════════ */
+
+.summary-header {
+  text-align: center;
+  padding: 20px 0;
+}
+.summary-emoji { font-size: 3rem; margin-bottom: 8px; }
+.summary-title { font-size: 1.5rem; font-weight: 800; }
+.summary-sub { color: var(--text-light); margin-top: 4px; }
+
+.summary-stats {
+  display: flex; gap: 10px;
+  margin: 20px 0;
+}
+.summary-stat {
+  flex: 1; text-align: center;
+  padding: 16px 8px;
+  border-radius: var(--radius-sm);
+}
+.summary-stat .num { font-size: 1.5rem; font-weight: 800; }
+.summary-stat .label { font-size: 0.8rem; margin-top: 2px; }
+.summary-stat.green { background: var(--green-light); color: #166534; }
+.summary-stat.orange { background: var(--orange-light); color: #92400e; }
+.summary-stat.red { background: var(--red-light); color: #991b1b; }
+
+.summary-streak {
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+}
+.summary-streak .fire { font-size: 2rem; }
+.summary-streak .text { font-weight: 700; color: #ea580c; }
+
+.summary-actions {
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ══════════════════════════════════════════
+   SCREEN: STATS
+   ══════════════════════════════════════════ */
+
+.stats-section {
+  margin-bottom: 24px;
+}
+.stats-section h3 {
+  margin-bottom: 12px;
+}
+
+.box-visual {
+  display: flex; gap: 6px; align-items: flex-end;
+  height: 120px; padding: 0 4px;
+}
+.box-bar-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; height: 100%;
+  justify-content: flex-end;
+}
+.box-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.5s ease;
+  min-height: 2px;
+}
+.box-bar-label {
+  font-size: 0.7rem; color: var(--text-light);
+  margin-top: 4px; text-align: center;
+}
+.box-bar-count {
+  font-size: 0.75rem; font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.calendar-day {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem;
+  color: var(--text-light);
+}
+.calendar-day.practiced { background: var(--green-light); color: #166534; font-weight: 600; }
+.calendar-day.today { border: 2px solid var(--text); font-weight: 700; }
+.calendar-day.empty { background: transparent; }
+.calendar-day.future { opacity: 0.3; }
+
+.total-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.total-stat {
+  text-align: center; padding: 16px;
+  background: var(--bg-card); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+.total-stat .num { font-size: 1.4rem; font-weight: 800; }
+.total-stat .label { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+
+/* ── Confetti ─────────────────────────────── */
+.confetti-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 9999;
+  overflow: hidden;
+}
+.confetti {
+  position: absolute; top: -10px;
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Utilities ────────────────────────────── */
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.text-center { text-align: center; }
+.hidden { display: none !important; }
+
+/* ══════════════════════════════════════════
+   SCREEN: PROFILE SELECT
+   ══════════════════════════════════════════ */
+.profile-header {
+  text-align: center;
+  padding: 48px 0 32px;
+}
+.profile-header h1 {
+  margin-bottom: 6px;
+}
+.profile-header .subtitle {
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+.profile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 2px solid var(--border);
+}
+.profile-card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-lg);
+}
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+.profile-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.profile-card .profile-streak {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+.profile-card .lang-arrow {
+  margin-left: auto;
+}
+
+/* Home profile bar */
+.home-profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.home-profile-bar .profile-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+}
+.home-profile-bar .profile-name {
+  font-size: 1rem;
+  flex: 1;
+}
+.home-profile-bar .switch-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  min-height: 36px;
+}
+
+/* ══════════════════════════════════════════
+   WRITING MODE
+   ══════════════════════════════════════════ */
+.mode-toggle {
+  display: flex;
+  background: var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.mode-toggle-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-light);
+  transition: background 0.2s, color 0.2s;
+}
+.mode-toggle-btn.active {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.write-area {
+  margin-top: 16px;
+}
+.write-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  font-family: inherit;
+  background: var(--bg-card);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.write-input:focus {
+  border-color: var(--lang-color, #3b82f6);
+}
+.write-input.correct {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.write-input.wrong {
+  border-color: var(--red);
+  background: var(--red-light);
+}
+.write-submit {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--lang-color, #3b82f6);
+  color: #fff;
+  min-height: 48px;
+}
+.write-submit:active {
+  transform: scale(0.97);
+}
+.write-result {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+.write-result.correct {
+  background: var(--green-light);
+  color: #166534;
+}
+.write-result.wrong {
+  background: var(--red-light);
+  color: #991b1b;
+}
+.write-result .diff-char-ok {
+  color: #166534;
+}
+.write-result .diff-char-wrong {
+  color: #991b1b;
+  background: #fca5a5;
+  border-radius: 3px;
+  padding: 0 1px;
+  text-decoration: line-through;
+}
+.write-result .diff-char-missing {
+  color: #991b1b;
+  background: #fde68a;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+.write-result .diff-label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.write-result .diff-line {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+.write-result .diff-correct-word {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.write-next {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--lang-color, #3b82f6);
+  color: #fff;
+  min-height: 48px;
+}
+.write-next:active {
+  transform: scale(0.97);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══════ PROFILE SELECT ═══════ -->
+  <div id="screen-profile" class="screen active">
+    <div class="profile-header">
+      <h1>Vokabeltrainer</h1>
+      <div class="subtitle">Wer lernt heute?</div>
+    </div>
+    <div class="profile-cards" id="profile-cards"></div>
+  </div>
+
+  <!-- ═══════ HOME ═══════ -->
+  <div id="screen-home" class="screen">
+    <div class="home-profile-bar" id="home-profile-bar"></div>
+    <div class="home-header">
+      <h1>Vokabeltrainer</h1>
+      <div class="subtitle">Jeden Tag ein bisschen besser!</div>
+    </div>
+
+    <div class="streak-display">
+      <div class="streak-fire">&#x1F525;</div>
+      <div class="streak-info">
+        <div class="streak-count" id="home-streak">0</div>
+        <div class="streak-label">Tage in Folge</div>
+      </div>
+    </div>
+
+    <div class="lang-cards" id="lang-cards"></div>
+
+    <div class="home-bottom">
+      <button class="btn btn-secondary" onclick="showScreen('screen-stats')">
+        &#x1F4CA; Statistik
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ CHAPTERS ═══════ -->
+  <div id="screen-chapters" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-home')">Zurück</button>
+    <div class="chapter-header" id="chapter-header"></div>
+    <div class="chapter-list" id="chapter-list"></div>
+    <div class="mode-toggle" id="mode-toggle">
+      <button class="mode-toggle-btn active" data-mode="flashcard" onclick="setMode('flashcard')">Karteikarten</button>
+      <button class="mode-toggle-btn" data-mode="writing" onclick="setMode('writing')">Schreiben</button>
+    </div>
+    <div class="start-section">
+      <div class="due-info" id="due-info"></div>
+      <button class="btn btn-primary btn-full" id="start-btn" onclick="startSession()">
+        Lernen starten
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ LEARN ═══════ -->
+  <div id="screen-learn" class="screen">
+    <div class="learn-top">
+      <div class="learn-progress-text" id="learn-progress-text">1 / 15</div>
+      <button class="learn-close" onclick="confirmAbort()">&times;</button>
+    </div>
+    <div class="learn-progress-bar">
+      <div class="learn-progress-fill" id="learn-progress-fill"></div>
+    </div>
+
+    <div class="learn-direction" id="learn-direction"></div>
+
+    <div class="flashcard-container" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-face flashcard-front">
+          <div class="flashcard-box-info" id="card-box-info"></div>
+          <div class="flashcard-word" id="card-front-word"></div>
+          <div class="flashcard-hint" id="card-front-hint"></div>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="flashcard-word" id="card-back-word"></div>
+          <div class="flashcard-hint" id="card-back-hint"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tap-hint" id="tap-hint">Tippe zum Aufdecken</div>
+
+    <div class="write-area hidden" id="write-area">
+      <input type="text" class="write-input" id="write-input" placeholder="Übersetzung eingeben..." autocomplete="off" autocapitalize="off">
+      <button class="write-submit" id="write-submit" onclick="checkAnswer()">Prüfen</button>
+      <div class="write-result hidden" id="write-result"></div>
+      <button class="write-next hidden" id="write-next" onclick="nextCardAfterWrite()">Weiter</button>
+    </div>
+
+    <div class="rating-buttons" id="rating-buttons">
+      <button class="rating-btn wrong" onclick="rateCard('wrong')">
+        <span class="emoji">&#x274C;</span>
+        <span>Wusste<br>ich nicht</span>
+      </button>
+      <button class="rating-btn hard" onclick="rateCard('hard')">
+        <span class="emoji">&#x1F914;</span>
+        <span>War<br>schwer</span>
+      </button>
+      <button class="rating-btn correct" onclick="rateCard('correct')">
+        <span class="emoji">&#x2705;</span>
+        <span>Gewusst!</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ SUMMARY ═══════ -->
+  <div id="screen-summary" class="screen">
+    <div class="summary-header">
+      <div class="summary-emoji" id="summary-emoji">&#x1F389;</div>
+      <div class="summary-title" id="summary-title">Super gemacht!</div>
+      <div class="summary-sub" id="summary-sub"></div>
+    </div>
+
+    <div class="summary-stats" id="summary-stats"></div>
+
+    <div class="summary-streak" id="summary-streak"></div>
+
+    <div class="summary-actions">
+      <button class="btn btn-primary btn-full" onclick="startSession()">
+        Nochmal üben
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="showScreen('screen-home')">
+        Zurück zum Start
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ STATS ═══════ -->
+  <div id="screen-stats" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-home')">Zurück</button>
+    <h2 class="mb-8">Statistik</h2>
+
+    <div class="stats-section">
+      <h3>&#x1F4E6; Fächer-Verteilung</h3>
+      <div class="card">
+        <div class="box-visual" id="box-visual"></div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h3>&#x1F4C5; Letzte 30 Tage</h3>
+      <div class="card">
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h3>&#x1F4CA; Gesamt</h3>
+      <div class="total-stats" id="total-stats"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// Vokabeldaten (vom Python-Generator eingebettet)
+// ══════════════════════════════════════════
+const VOCAB = {
+  "languages": [
+    {
+      "id": "en",
+      "name": "Englisch",
+      "flag": "🇬🇧",
+      "color": "#3b82f6",
+      "colorLight": "#dbeafe",
+      "chapters": [
+        {
+          "id": "en_1",
+          "name": "Unit 1: At School",
+          "cards": [
+            {
+              "id": "en_1_1",
+              "de": "die Schule",
+              "word": "the school"
+            },
+            {
+              "id": "en_1_2",
+              "de": "der Lehrer",
+              "word": "the teacher"
+            },
+            {
+              "id": "en_1_3",
+              "de": "die Tafel",
+              "word": "the blackboard"
+            },
+            {
+              "id": "en_1_4",
+              "de": "das Heft",
+              "word": "the notebook"
+            },
+            {
+              "id": "en_1_5",
+              "de": "der Bleistift",
+              "word": "the pencil"
+            },
+            {
+              "id": "en_1_6",
+              "de": "die Pause",
+              "word": "the break"
+            },
+            {
+              "id": "en_1_7",
+              "de": "der Stundenplan",
+              "word": "the timetable"
+            },
+            {
+              "id": "en_1_8",
+              "de": "die Hausaufgabe",
+              "word": "the homework"
+            },
+            {
+              "id": "en_1_9",
+              "de": "lernen",
+              "word": "to learn"
+            },
+            {
+              "id": "en_1_10",
+              "de": "schreiben",
+              "word": "to write"
+            }
+          ]
+        },
+        {
+          "id": "en_2",
+          "name": "Unit 2: My Family",
+          "cards": [
+            {
+              "id": "en_2_1",
+              "de": "die Familie",
+              "word": "the family"
+            },
+            {
+              "id": "en_2_2",
+              "de": "die Mutter",
+              "word": "the mother"
+            },
+            {
+              "id": "en_2_3",
+              "de": "der Vater",
+              "word": "the father"
+            },
+            {
+              "id": "en_2_4",
+              "de": "der Bruder",
+              "word": "the brother"
+            },
+            {
+              "id": "en_2_5",
+              "de": "die Schwester",
+              "word": "the sister"
+            },
+            {
+              "id": "en_2_6",
+              "de": "die Großmutter",
+              "word": "the grandmother"
+            },
+            {
+              "id": "en_2_7",
+              "de": "der Großvater",
+              "word": "the grandfather"
+            },
+            {
+              "id": "en_2_8",
+              "de": "das Kind",
+              "word": "the child"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fr",
+      "name": "Französisch",
+      "flag": "🇫🇷",
+      "color": "#e11d48",
+      "colorLight": "#ffe4e6",
+      "chapters": [
+        {
+          "id": "fr_1",
+          "name": "Unité 1: Salut! – Begrüßung",
+          "cards": [
+            {
+              "id": "fr_1_1",
+              "de": "Los geht's!",
+              "word": "C'est parti! (fam.)"
+            },
+            {
+              "id": "fr_1_2",
+              "de": "Hallo! / Tschüss!",
+              "word": "Salut! (fam.)"
+            },
+            {
+              "id": "fr_1_3",
+              "de": "Wie heißt du?",
+              "word": "Tu t'appelles comment?"
+            },
+            {
+              "id": "fr_1_4",
+              "de": "ich heiße",
+              "word": "je m'appelle"
+            },
+            {
+              "id": "fr_1_5",
+              "de": "Und du? / Und dir?",
+              "word": "Et toi?"
+            },
+            {
+              "id": "fr_1_6",
+              "de": "und",
+              "word": "et"
+            },
+            {
+              "id": "fr_1_7",
+              "de": "du",
+              "word": "toi"
+            },
+            {
+              "id": "fr_1_8",
+              "de": "Bis später!",
+              "word": "À plus! (fam.)"
+            },
+            {
+              "id": "fr_1_9",
+              "de": "Wie geht's? / Geht's (dir) gut?",
+              "word": "Ça va?"
+            },
+            {
+              "id": "fr_1_10",
+              "de": "Na ja. / Es geht so.",
+              "word": "bof (fam.)"
+            },
+            {
+              "id": "fr_1_11",
+              "de": "Es geht mir gut.",
+              "word": "Ça va."
+            },
+            {
+              "id": "fr_1_12",
+              "de": "super / toll",
+              "word": "super (fam.)"
+            },
+            {
+              "id": "fr_1_13",
+              "de": "ach / ach so",
+              "word": "ah"
+            },
+            {
+              "id": "fr_1_14",
+              "de": "Es klingelt!",
+              "word": "Ça sonne!"
+            },
+            {
+              "id": "fr_1_15",
+              "de": "Bis morgen!",
+              "word": "À demain!"
+            }
+          ]
+        },
+        {
+          "id": "fr_2",
+          "name": "Unité 2: Bonjour! – Alter & Zahlen",
+          "cards": [
+            {
+              "id": "fr_2_1",
+              "de": "Guten Tag! / Guten Morgen!",
+              "word": "Bonjour!"
+            },
+            {
+              "id": "fr_2_2",
+              "de": "die Klasse",
+              "word": "la classe"
+            },
+            {
+              "id": "fr_2_3",
+              "de": "Frau (Anrede)",
+              "word": "Madame / Mme"
+            },
+            {
+              "id": "fr_2_4",
+              "de": "Herr (Anrede)",
+              "word": "Monsieur / M."
+            },
+            {
+              "id": "fr_2_5",
+              "de": "Auf Wiedersehen!",
+              "word": "Au revoir!"
+            },
+            {
+              "id": "fr_2_6",
+              "de": "Wie alt bist du?",
+              "word": "Tu as quel âge?"
+            },
+            {
+              "id": "fr_2_7",
+              "de": "ich bin ... Jahre alt",
+              "word": "j'ai ... ans"
+            },
+            {
+              "id": "fr_2_8",
+              "de": "null",
+              "word": "zéro"
+            },
+            {
+              "id": "fr_2_9",
+              "de": "eins",
+              "word": "un"
+            },
+            {
+              "id": "fr_2_10",
+              "de": "zwei",
+              "word": "deux"
+            },
+            {
+              "id": "fr_2_11",
+              "de": "drei",
+              "word": "trois"
+            },
+            {
+              "id": "fr_2_12",
+              "de": "vier",
+              "word": "quatre"
+            },
+            {
+              "id": "fr_2_13",
+              "de": "fünf",
+              "word": "cinq"
+            },
+            {
+              "id": "fr_2_14",
+              "de": "sechs",
+              "word": "six"
+            },
+            {
+              "id": "fr_2_15",
+              "de": "sieben",
+              "word": "sept"
+            },
+            {
+              "id": "fr_2_16",
+              "de": "acht",
+              "word": "huit"
+            },
+            {
+              "id": "fr_2_17",
+              "de": "neun",
+              "word": "neuf"
+            },
+            {
+              "id": "fr_2_18",
+              "de": "zehn",
+              "word": "dix"
+            },
+            {
+              "id": "fr_2_19",
+              "de": "elf",
+              "word": "onze"
+            },
+            {
+              "id": "fr_2_20",
+              "de": "zwölf",
+              "word": "douze"
+            },
+            {
+              "id": "fr_2_21",
+              "de": "dreizehn",
+              "word": "treize"
+            },
+            {
+              "id": "fr_2_22",
+              "de": "vierzehn",
+              "word": "quatorze"
+            },
+            {
+              "id": "fr_2_23",
+              "de": "fünfzehn",
+              "word": "quinze"
+            },
+            {
+              "id": "fr_2_24",
+              "de": "sechzehn",
+              "word": "seize"
+            },
+            {
+              "id": "fr_2_25",
+              "de": "siebzehn",
+              "word": "dix-sept"
+            },
+            {
+              "id": "fr_2_26",
+              "de": "achtzehn",
+              "word": "dix-huit"
+            },
+            {
+              "id": "fr_2_27",
+              "de": "neunzehn",
+              "word": "dix-neuf"
+            },
+            {
+              "id": "fr_2_28",
+              "de": "zwanzig",
+              "word": "vingt"
+            },
+            {
+              "id": "fr_2_29",
+              "de": "Wo wohnst du?",
+              "word": "Tu habites où?"
+            },
+            {
+              "id": "fr_2_30",
+              "de": "ich wohne",
+              "word": "j'habite"
+            },
+            {
+              "id": "fr_2_31",
+              "de": "in (bei Ländern)",
+              "word": "en"
+            },
+            {
+              "id": "fr_2_32",
+              "de": "in (bei Städten)",
+              "word": "à"
+            },
+            {
+              "id": "fr_2_33",
+              "de": "Deutschland",
+              "word": "l'Allemagne (f.)"
+            },
+            {
+              "id": "fr_2_34",
+              "de": "Frankreich",
+              "word": "la France"
+            },
+            {
+              "id": "fr_2_35",
+              "de": "Paris",
+              "word": "Paris"
+            }
+          ]
+        },
+        {
+          "id": "fr_3",
+          "name": "Unité 3: J'aime – Vorlieben",
+          "cards": [
+            {
+              "id": "fr_3_1",
+              "de": "ich (betont)",
+              "word": "moi"
+            },
+            {
+              "id": "fr_3_2",
+              "de": "ich mag",
+              "word": "j'aime"
+            },
+            {
+              "id": "fr_3_3",
+              "de": "ich mag ... nicht / kein(e)",
+              "word": "je n'aime pas"
+            },
+            {
+              "id": "fr_3_4",
+              "de": "aber",
+              "word": "mais"
+            },
+            {
+              "id": "fr_3_5",
+              "de": "die Videospiele",
+              "word": "les jeux vidéo (m. pl.)"
+            },
+            {
+              "id": "fr_3_6",
+              "de": "das Einkaufen / Shoppen",
+              "word": "le shopping"
+            },
+            {
+              "id": "fr_3_7",
+              "de": "der Sport",
+              "word": "le sport"
+            },
+            {
+              "id": "fr_3_8",
+              "de": "die Musik",
+              "word": "la musique"
+            },
+            {
+              "id": "fr_3_9",
+              "de": "die Natur",
+              "word": "la nature"
+            },
+            {
+              "id": "fr_3_10",
+              "de": "die Schokolade",
+              "word": "le chocolat"
+            },
+            {
+              "id": "fr_3_11",
+              "de": "die Spaghetti",
+              "word": "les spaghettis (m. pl.)"
+            },
+            {
+              "id": "fr_3_12",
+              "de": "die Pizza",
+              "word": "la pizza"
+            },
+            {
+              "id": "fr_3_13",
+              "de": "die Tomaten",
+              "word": "les tomates (f. pl.)"
+            },
+            {
+              "id": "fr_3_14",
+              "de": "der Salat",
+              "word": "la salade"
+            },
+            {
+              "id": "fr_3_15",
+              "de": "Gelb",
+              "word": "le jaune"
+            },
+            {
+              "id": "fr_3_16",
+              "de": "Rot",
+              "word": "le rouge"
+            },
+            {
+              "id": "fr_3_17",
+              "de": "Blau",
+              "word": "le bleu"
+            },
+            {
+              "id": "fr_3_18",
+              "de": "Grün",
+              "word": "le vert"
+            },
+            {
+              "id": "fr_3_19",
+              "de": "Schwarz",
+              "word": "le noir"
+            },
+            {
+              "id": "fr_3_20",
+              "de": "die Katzen",
+              "word": "les chats (m. pl.)"
+            },
+            {
+              "id": "fr_3_21",
+              "de": "die Hunde",
+              "word": "les chiens (m. pl.)"
+            },
+            {
+              "id": "fr_3_22",
+              "de": "die Ratten",
+              "word": "les rats (m. pl.)"
+            },
+            {
+              "id": "fr_3_23",
+              "de": "die Fische",
+              "word": "les poissons (m. pl.)"
+            },
+            {
+              "id": "fr_3_24",
+              "de": "die Schildkröten",
+              "word": "les tortues (f. pl.)"
+            },
+            {
+              "id": "fr_3_25",
+              "de": "Magst du ...?",
+              "word": "Tu aimes...?"
+            },
+            {
+              "id": "fr_3_26",
+              "de": "ja",
+              "word": "oui"
+            },
+            {
+              "id": "fr_3_27",
+              "de": "nein",
+              "word": "non"
+            },
+            {
+              "id": "fr_3_28",
+              "de": "oder",
+              "word": "ou"
+            }
+          ]
+        },
+        {
+          "id": "fr_4",
+          "name": "Unité 4: Bienvenue à Paris – Die Stadt",
+          "cards": [
+            {
+              "id": "fr_4_1",
+              "de": "Willkommen!",
+              "word": "Bienvenue!"
+            },
+            {
+              "id": "fr_4_2",
+              "de": "die Stadt",
+              "word": "la ville"
+            },
+            {
+              "id": "fr_4_3",
+              "de": "das Kino",
+              "word": "le cinéma"
+            },
+            {
+              "id": "fr_4_4",
+              "de": "der Park",
+              "word": "le parc"
+            },
+            {
+              "id": "fr_4_5",
+              "de": "das Theater",
+              "word": "le théâtre"
+            },
+            {
+              "id": "fr_4_6",
+              "de": "das Café / der Kaffee",
+              "word": "le café"
+            },
+            {
+              "id": "fr_4_7",
+              "de": "das Restaurant",
+              "word": "le restaurant"
+            },
+            {
+              "id": "fr_4_8",
+              "de": "das Hotel",
+              "word": "l'hôtel (m.)"
+            },
+            {
+              "id": "fr_4_9",
+              "de": "das Museum",
+              "word": "le musée"
+            },
+            {
+              "id": "fr_4_10",
+              "de": "die U-Bahn / Metro",
+              "word": "le métro"
+            },
+            {
+              "id": "fr_4_11",
+              "de": "der Turm",
+              "word": "la tour"
+            },
+            {
+              "id": "fr_4_12",
+              "de": "der Supermarkt",
+              "word": "le supermarché"
+            },
+            {
+              "id": "fr_4_13",
+              "de": "die Schule (Mittelstufe)",
+              "word": "le collège"
+            },
+            {
+              "id": "fr_4_14",
+              "de": "das Stadion",
+              "word": "le stade"
+            },
+            {
+              "id": "fr_4_15",
+              "de": "Verzeihung / Entschuldigung",
+              "word": "pardon"
+            },
+            {
+              "id": "fr_4_16",
+              "de": "Wo ist ...?",
+              "word": "Où est...?"
+            },
+            {
+              "id": "fr_4_17",
+              "de": "Wo ...? / Wohin ...?",
+              "word": "Où...?"
+            },
+            {
+              "id": "fr_4_18",
+              "de": "das ist",
+              "word": "c'est"
+            },
+            {
+              "id": "fr_4_19",
+              "de": "das sind",
+              "word": "ce sont"
+            },
+            {
+              "id": "fr_4_20",
+              "de": "Wer ist das?",
+              "word": "C'est qui?"
+            },
+            {
+              "id": "fr_4_21",
+              "de": "[mwase]",
+              "word": "moi"
+            },
+            {
+              "id": "fr_4_22",
+              "de": "Wie ...?",
+              "word": "Comment...?"
+            },
+            {
+              "id": "fr_4_23",
+              "de": "Hier ist ... / Hier sind ...",
+              "word": "Voilà..."
+            },
+            {
+              "id": "fr_4_24",
+              "de": "das Mädchen",
+              "word": "la fille"
+            },
+            {
+              "id": "fr_4_25",
+              "de": "der Junge",
+              "word": "le garçon"
+            },
+            {
+              "id": "fr_4_26",
+              "de": "der Freund / die Freundin",
+              "word": "l'ami / l'amie"
+            },
+            {
+              "id": "fr_4_27",
+              "de": "von",
+              "word": "de"
+            },
+            {
+              "id": "fr_4_28",
+              "de": "mein Freund / meine Freundin",
+              "word": "mon ami / mon amie"
+            },
+            {
+              "id": "fr_4_29",
+              "de": "er / sie heißt",
+              "word": "il / elle s'appelle"
+            },
+            {
+              "id": "fr_4_30",
+              "de": "da / hier",
+              "word": "là"
+            },
+            {
+              "id": "fr_4_31",
+              "de": "danke",
+              "word": "merci"
+            },
+            {
+              "id": "fr_4_32",
+              "de": "der / die / das (bestimmter Artikel)",
+              "word": "le / la / l'"
+            },
+            {
+              "id": "fr_4_33",
+              "de": "die (Plural)",
+              "word": "les"
+            },
+            {
+              "id": "fr_4_34",
+              "de": "mit",
+              "word": "avec"
+            },
+            {
+              "id": "fr_4_35",
+              "de": "einverstanden / okay",
+              "word": "d'accord"
+            },
+            {
+              "id": "fr_4_36",
+              "de": "Ich weiß es nicht.",
+              "word": "Je ne sais pas."
+            },
+            {
+              "id": "fr_4_37",
+              "de": "hier",
+              "word": "ici"
+            }
+          ]
+        },
+        {
+          "id": "fr_5",
+          "name": "Unité 5: Être – Sein & das Viertel",
+          "cards": [
+            {
+              "id": "fr_5_1",
+              "de": "seit / seitdem",
+              "word": "depuis"
+            },
+            {
+              "id": "fr_5_2",
+              "de": "Samstag / am Samstag",
+              "word": "samedi"
+            },
+            {
+              "id": "fr_5_3",
+              "de": "cool",
+              "word": "cool (fam.)"
+            },
+            {
+              "id": "fr_5_4",
+              "de": "also",
+              "word": "alors"
+            },
+            {
+              "id": "fr_5_5",
+              "de": "in",
+              "word": "dans"
+            },
+            {
+              "id": "fr_5_6",
+              "de": "das Viertel",
+              "word": "le quartier"
+            },
+            {
+              "id": "fr_5_7",
+              "de": "hi / hallo",
+              "word": "coucou (fam.)"
+            },
+            {
+              "id": "fr_5_8",
+              "de": "das sind wir / wir sind's",
+              "word": "c'est nous"
+            },
+            {
+              "id": "fr_5_9",
+              "de": "das bin ich / ich bin's",
+              "word": "c'est moi"
+            },
+            {
+              "id": "fr_5_10",
+              "de": "sein",
+              "word": "être"
+            },
+            {
+              "id": "fr_5_11",
+              "de": "ich bin",
+              "word": "je suis"
+            },
+            {
+              "id": "fr_5_12",
+              "de": "du bist",
+              "word": "tu es"
+            },
+            {
+              "id": "fr_5_13",
+              "de": "er / sie / man ist",
+              "word": "il / elle / on est"
+            },
+            {
+              "id": "fr_5_14",
+              "de": "wir sind",
+              "word": "nous sommes"
+            },
+            {
+              "id": "fr_5_15",
+              "de": "ihr seid / Sie sind",
+              "word": "vous êtes"
+            },
+            {
+              "id": "fr_5_16",
+              "de": "sie sind",
+              "word": "ils / elles sont"
+            },
+            {
+              "id": "fr_5_17",
+              "de": "aus (Herkunft)",
+              "word": "de"
+            },
+            {
+              "id": "fr_5_18",
+              "de": "die Straße",
+              "word": "la rue"
+            },
+            {
+              "id": "fr_5_19",
+              "de": "Tunesien",
+              "word": "la Tunisie"
+            },
+            {
+              "id": "fr_5_20",
+              "de": "nett / sympathisch",
+              "word": "sympa / sympathique"
+            },
+            {
+              "id": "fr_5_21",
+              "de": "in derselben Klasse",
+              "word": "dans la même classe"
+            },
+            {
+              "id": "fr_5_22",
+              "de": "auch",
+              "word": "aussi"
+            },
+            {
+              "id": "fr_5_23",
+              "de": "zusammen",
+              "word": "ensemble"
+            },
+            {
+              "id": "fr_5_24",
+              "de": "die AG / der Verein / Klub",
+              "word": "le club"
+            },
+            {
+              "id": "fr_5_25",
+              "de": "die Drohne",
+              "word": "le drone"
+            }
+          ]
+        },
+        {
+          "id": "fr_6",
+          "name": "Unité 6: Le collège – Schule & Unterricht",
+          "cards": [
+            {
+              "id": "fr_6_1",
+              "de": "die sechste Klasse",
+              "word": "la sixième"
+            },
+            {
+              "id": "fr_6_2",
+              "de": "die siebte Klasse",
+              "word": "la cinquième"
+            },
+            {
+              "id": "fr_6_3",
+              "de": "Basketball",
+              "word": "le basket"
+            },
+            {
+              "id": "fr_6_4",
+              "de": "die Serie",
+              "word": "la série"
+            },
+            {
+              "id": "fr_6_5",
+              "de": "der Tanz / das Tanzen",
+              "word": "la danse"
+            },
+            {
+              "id": "fr_6_6",
+              "de": "oft",
+              "word": "souvent"
+            },
+            {
+              "id": "fr_6_7",
+              "de": "zu spät / mit Verspätung",
+              "word": "en retard"
+            },
+            {
+              "id": "fr_6_8",
+              "de": "Was gibt es ...?",
+              "word": "Qu'est-ce qu'il y a...?"
+            },
+            {
+              "id": "fr_6_9",
+              "de": "es gibt",
+              "word": "il y a"
+            },
+            {
+              "id": "fr_6_10",
+              "de": "die Frage",
+              "word": "la question"
+            },
+            {
+              "id": "fr_6_11",
+              "de": "die Antwort",
+              "word": "la réponse"
+            },
+            {
+              "id": "fr_6_12",
+              "de": "die Kathedrale / der Dom",
+              "word": "la cathédrale"
+            },
+            {
+              "id": "fr_6_13",
+              "de": "ein / eine (unbestimmter Artikel)",
+              "word": "un / une"
+            },
+            {
+              "id": "fr_6_14",
+              "de": "(Plural unbestimmter Artikel)",
+              "word": "des"
+            },
+            {
+              "id": "fr_6_15",
+              "de": "wie / wie z. B.",
+              "word": "comme"
+            },
+            {
+              "id": "fr_6_16",
+              "de": "der Bahnhof",
+              "word": "la gare"
+            },
+            {
+              "id": "fr_6_17",
+              "de": "zum Beispiel (z. B.)",
+              "word": "par exemple (p. ex.)"
+            },
+            {
+              "id": "fr_6_18",
+              "de": "für",
+              "word": "pour"
+            },
+            {
+              "id": "fr_6_19",
+              "de": "der Fan",
+              "word": "le fan / la fan"
+            },
+            {
+              "id": "fr_6_20",
+              "de": "die Wissenschaft",
+              "word": "la science"
+            },
+            {
+              "id": "fr_6_21",
+              "de": "das Geschäft / der Laden",
+              "word": "le magasin"
+            },
+            {
+              "id": "fr_6_22",
+              "de": "das Einkaufszentrum",
+              "word": "le centre commercial"
+            },
+            {
+              "id": "fr_6_23",
+              "de": "die Bäckerei",
+              "word": "la boulangerie"
+            },
+            {
+              "id": "fr_6_24",
+              "de": "außerdem",
+              "word": "en plus"
+            },
+            {
+              "id": "fr_6_25",
+              "de": "zwischen",
+              "word": "entre"
+            },
+            {
+              "id": "fr_6_26",
+              "de": "im Unterricht",
+              "word": "en cours"
+            },
+            {
+              "id": "fr_6_27",
+              "de": "Französisch",
+              "word": "le français"
+            },
+            {
+              "id": "fr_6_28",
+              "de": "Was ist das?",
+              "word": "Qu'est-ce que c'est?"
+            },
+            {
+              "id": "fr_6_29",
+              "de": "ein Alphabet",
+              "word": "un alphabet"
+            },
+            {
+              "id": "fr_6_30",
+              "de": "Das war's! / Es ist beendet!",
+              "word": "C'est terminé!"
+            },
+            {
+              "id": "fr_6_31",
+              "de": "Wie sagt man ...?",
+              "word": "Comment on dit...?"
+            },
+            {
+              "id": "fr_6_32",
+              "de": "Man sagt ...",
+              "word": "On dit..."
+            },
+            {
+              "id": "fr_6_33",
+              "de": "Wie schreibt man ...?",
+              "word": "Comment on écrit...?"
+            },
+            {
+              "id": "fr_6_34",
+              "de": "Man schreibt ...",
+              "word": "On écrit..."
+            },
+            {
+              "id": "fr_6_35",
+              "de": "auf Französisch / auf Deutsch",
+              "word": "en français / en allemand"
+            },
+            {
+              "id": "fr_6_36",
+              "de": "das Heft",
+              "word": "le cahier"
+            },
+            {
+              "id": "fr_6_37",
+              "de": "der Stift / Kugelschreiber",
+              "word": "le stylo"
+            },
+            {
+              "id": "fr_6_38",
+              "de": "das Blatt",
+              "word": "la feuille"
+            }
+          ]
+        },
+        {
+          "id": "fr_7",
+          "name": "Unité 7: La famille – Die Familie",
+          "cards": [
+            {
+              "id": "fr_7_1",
+              "de": "mein / meine",
+              "word": "mon / ma / mes"
+            },
+            {
+              "id": "fr_7_2",
+              "de": "die Familie",
+              "word": "la famille"
+            },
+            {
+              "id": "fr_7_3",
+              "de": "die Eltern",
+              "word": "les parents (m. pl.)"
+            },
+            {
+              "id": "fr_7_4",
+              "de": "der Vater",
+              "word": "le père"
+            },
+            {
+              "id": "fr_7_5",
+              "de": "die Mutter",
+              "word": "la mère"
+            },
+            {
+              "id": "fr_7_6",
+              "de": "die Großeltern",
+              "word": "les grands-parents (m. pl.)"
+            },
+            {
+              "id": "fr_7_7",
+              "de": "der Großvater",
+              "word": "le grand-père"
+            },
+            {
+              "id": "fr_7_8",
+              "de": "die Großmutter",
+              "word": "la grand-mère"
+            },
+            {
+              "id": "fr_7_9",
+              "de": "die Geschwister",
+              "word": "les frères et sœurs (m. pl.)"
+            },
+            {
+              "id": "fr_7_10",
+              "de": "der Bruder",
+              "word": "le frère"
+            },
+            {
+              "id": "fr_7_11",
+              "de": "die Schwester",
+              "word": "la sœur"
+            },
+            {
+              "id": "fr_7_12",
+              "de": "der Halbbruder",
+              "word": "le demi-frère"
+            },
+            {
+              "id": "fr_7_13",
+              "de": "die Halbschwester",
+              "word": "la demi-sœur"
+            },
+            {
+              "id": "fr_7_14",
+              "de": "ein Onkel",
+              "word": "un oncle"
+            },
+            {
+              "id": "fr_7_15",
+              "de": "die Tante",
+              "word": "la tante"
+            },
+            {
+              "id": "fr_7_16",
+              "de": "der Cousin / die Cousine",
+              "word": "le cousin / la cousine"
+            },
+            {
+              "id": "fr_7_17",
+              "de": "ein Kind",
+              "word": "un enfant / une enfant"
+            },
+            {
+              "id": "fr_7_18",
+              "de": "der Sohn",
+              "word": "le fils"
+            },
+            {
+              "id": "fr_7_19",
+              "de": "die Tochter (hier)",
+              "word": "la fille"
+            },
+            {
+              "id": "fr_7_20",
+              "de": "der Freund / die Freundin (Kumpel)",
+              "word": "le copain / la copine"
+            },
+            {
+              "id": "fr_7_21",
+              "de": "ein (Haus-)Tier",
+              "word": "un animal"
+            },
+            {
+              "id": "fr_7_22",
+              "de": "das Kaninchen",
+              "word": "le lapin"
+            },
+            {
+              "id": "fr_7_23",
+              "de": "haben",
+              "word": "avoir"
+            },
+            {
+              "id": "fr_7_24",
+              "de": "ich habe",
+              "word": "j'ai"
+            },
+            {
+              "id": "fr_7_25",
+              "de": "du hast",
+              "word": "tu as"
+            },
+            {
+              "id": "fr_7_26",
+              "de": "er / sie / man hat",
+              "word": "il / elle / on a"
+            },
+            {
+              "id": "fr_7_27",
+              "de": "wir haben",
+              "word": "nous avons"
+            },
+            {
+              "id": "fr_7_28",
+              "de": "ihr habt / Sie haben",
+              "word": "vous avez"
+            },
+            {
+              "id": "fr_7_29",
+              "de": "sie haben",
+              "word": "ils / elles ont"
+            },
+            {
+              "id": "fr_7_30",
+              "de": "... Jahre alt sein",
+              "word": "avoir ... ans"
+            },
+            {
+              "id": "fr_7_31",
+              "de": "Ich habe keine Geschwister.",
+              "word": "Je n'ai pas de frères et sœurs."
+            },
+            {
+              "id": "fr_7_32",
+              "de": "das Motorrad",
+              "word": "la moto"
+            },
+            {
+              "id": "fr_7_33",
+              "de": "Fan von jdm/etw. sein",
+              "word": "être fan de qn/qc"
+            },
+            {
+              "id": "fr_7_34",
+              "de": "wie ich",
+              "word": "comme moi"
+            },
+            {
+              "id": "fr_7_35",
+              "de": "zu Hause",
+              "word": "à la maison"
+            },
+            {
+              "id": "fr_7_36",
+              "de": "das stimmt / das ist wahr",
+              "word": "c'est vrai"
+            },
+            {
+              "id": "fr_7_37",
+              "de": "das ist lustig",
+              "word": "c'est drôle"
+            },
+            {
+              "id": "fr_7_38",
+              "de": "bei",
+              "word": "chez"
+            },
+            {
+              "id": "fr_7_39",
+              "de": "ich auch",
+              "word": "moi aussi"
+            },
+            {
+              "id": "fr_7_40",
+              "de": "ich möchte",
+              "word": "je voudrais"
+            },
+            {
+              "id": "fr_7_41",
+              "de": "der Stiefvater",
+              "word": "le beau-père"
+            },
+            {
+              "id": "fr_7_42",
+              "de": "die Stiefmutter",
+              "word": "la belle-mère"
+            },
+            {
+              "id": "fr_7_43",
+              "de": "dagegen sein",
+              "word": "être contre"
+            },
+            {
+              "id": "fr_7_44",
+              "de": "eine Allergie",
+              "word": "une allergie"
+            },
+            {
+              "id": "fr_7_45",
+              "de": "das ist doof",
+              "word": "c'est nul (fam.)"
+            },
+            {
+              "id": "fr_7_46",
+              "de": "ja und nein / teils teils",
+              "word": "oui et non"
+            },
+            {
+              "id": "fr_7_47",
+              "de": "Ich habe kein Haustier.",
+              "word": "Je n'ai pas d'animal."
+            },
+            {
+              "id": "fr_7_48",
+              "de": "süß",
+              "word": "chou (fam.)"
+            },
+            {
+              "id": "fr_7_49",
+              "de": "noch / wieder",
+              "word": "encore"
+            },
+            {
+              "id": "fr_7_50",
+              "de": "das ist schade",
+              "word": "c'est dommage"
+            },
+            {
+              "id": "fr_7_51",
+              "de": "Wer ...?",
+              "word": "Qui...?"
+            },
+            {
+              "id": "fr_7_52",
+              "de": "dein / deine",
+              "word": "ton / ta / tes"
+            },
+            {
+              "id": "fr_7_53",
+              "de": "sein / seine / ihr / ihre",
+              "word": "son / sa / ses"
+            },
+            {
+              "id": "fr_7_54",
+              "de": "das Wochenende / am Wochenende",
+              "word": "le week-end"
+            },
+            {
+              "id": "fr_7_55",
+              "de": "er / sie nervt (mich)",
+              "word": "il / elle m'énerve"
+            },
+            {
+              "id": "fr_7_56",
+              "de": "eine Urgroßmutter",
+              "word": "une arrière-grand-mère"
+            },
+            {
+              "id": "fr_7_57",
+              "de": "ein Urgroßvater",
+              "word": "un arrière-grand-père"
+            },
+            {
+              "id": "fr_7_58",
+              "de": "er / sie wohnt",
+              "word": "il / elle habite"
+            },
+            {
+              "id": "fr_7_59",
+              "de": "sie wohnen",
+              "word": "ils / elles habitent"
+            },
+            {
+              "id": "fr_7_60",
+              "de": "nah / in der Nähe",
+              "word": "près"
+            },
+            {
+              "id": "fr_7_61",
+              "de": "bei / in der Nähe von",
+              "word": "près de"
+            },
+            {
+              "id": "fr_7_62",
+              "de": "die Konditorei / das Gebäck",
+              "word": "la pâtisserie"
+            },
+            {
+              "id": "fr_7_63",
+              "de": "getrennt",
+              "word": "séparés"
+            },
+            {
+              "id": "fr_7_64",
+              "de": "Guadeloupe",
+              "word": "la Guadeloupe"
+            },
+            {
+              "id": "fr_7_65",
+              "de": "manchmal",
+              "word": "parfois"
+            },
+            {
+              "id": "fr_7_66",
+              "de": "ein bisschen",
+              "word": "un peu"
+            },
+            {
+              "id": "fr_7_67",
+              "de": "trotzdem / dennoch",
+              "word": "quand même"
+            }
+          ]
+        },
+        {
+          "id": "fr_8",
+          "name": "Unité 8: La chambre – Zimmer & Möbel",
+          "cards": [
+            {
+              "id": "fr_8_1",
+              "de": "das Zimmer",
+              "word": "la chambre"
+            },
+            {
+              "id": "fr_8_2",
+              "de": "jedes zweite Wochenende",
+              "word": "un week-end sur deux"
+            },
+            {
+              "id": "fr_8_3",
+              "de": "das Problem",
+              "word": "le problème"
+            },
+            {
+              "id": "fr_8_4",
+              "de": "Das ist der Horror!",
+              "word": "C'est l'horreur! (fam.)"
+            },
+            {
+              "id": "fr_8_5",
+              "de": "für mich",
+              "word": "pour moi"
+            },
+            {
+              "id": "fr_8_6",
+              "de": "während",
+              "word": "pendant"
+            },
+            {
+              "id": "fr_8_7",
+              "de": "die Ferien",
+              "word": "les vacances (f. pl.)"
+            },
+            {
+              "id": "fr_8_8",
+              "de": "die Bretagne",
+              "word": "la Bretagne"
+            },
+            {
+              "id": "fr_8_9",
+              "de": "Was machst du?",
+              "word": "Qu'est-ce que tu fais?"
+            },
+            {
+              "id": "fr_8_10",
+              "de": "Was ...?",
+              "word": "Qu'est-ce que...?"
+            },
+            {
+              "id": "fr_8_11",
+              "de": "(Fragepartikel)",
+              "word": "est-ce que"
+            },
+            {
+              "id": "fr_8_12",
+              "de": "arbeiten / lernen",
+              "word": "travailler"
+            },
+            {
+              "id": "fr_8_13",
+              "de": "zuhören / (an-)hören",
+              "word": "écouter"
+            },
+            {
+              "id": "fr_8_14",
+              "de": "ansehen / anschauen",
+              "word": "regarder"
+            },
+            {
+              "id": "fr_8_15",
+              "de": "das Video",
+              "word": "la vidéo"
+            },
+            {
+              "id": "fr_8_16",
+              "de": "erzählen",
+              "word": "raconter"
+            },
+            {
+              "id": "fr_8_17",
+              "de": "zeichnen",
+              "word": "dessiner"
+            },
+            {
+              "id": "fr_8_18",
+              "de": "das/der Manga",
+              "word": "le manga"
+            },
+            {
+              "id": "fr_8_19",
+              "de": "lachen",
+              "word": "rigoler"
+            },
+            {
+              "id": "fr_8_20",
+              "de": "mögen / lieben",
+              "word": "aimer"
+            },
+            {
+              "id": "fr_8_21",
+              "de": "Fußball",
+              "word": "le foot(ball)"
+            },
+            {
+              "id": "fr_8_22",
+              "de": "spielen",
+              "word": "jouer"
+            },
+            {
+              "id": "fr_8_23",
+              "de": "etw. spielen",
+              "word": "jouer à"
+            },
+            {
+              "id": "fr_8_24",
+              "de": "sprechen",
+              "word": "parler"
+            },
+            {
+              "id": "fr_8_25",
+              "de": "chatten",
+              "word": "chatter"
+            },
+            {
+              "id": "fr_8_26",
+              "de": "das Internet",
+              "word": "Internet"
+            },
+            {
+              "id": "fr_8_27",
+              "de": "eine Schule",
+              "word": "une école"
+            },
+            {
+              "id": "fr_8_28",
+              "de": "immer",
+              "word": "toujours"
+            },
+            {
+              "id": "fr_8_29",
+              "de": "die Woche",
+              "word": "la semaine"
+            },
+            {
+              "id": "fr_8_30",
+              "de": "sehr / viel",
+              "word": "beaucoup"
+            },
+            {
+              "id": "fr_8_31",
+              "de": "weit (weg)",
+              "word": "loin"
+            },
+            {
+              "id": "fr_8_32",
+              "de": "der Lehrer / die Lehrerin",
+              "word": "le prof / la prof (fam.)"
+            },
+            {
+              "id": "fr_8_33",
+              "de": "der Schüler / die Schülerin",
+              "word": "l'élève"
+            },
+            {
+              "id": "fr_8_34",
+              "de": "gut",
+              "word": "bien"
+            },
+            {
+              "id": "fr_8_35",
+              "de": "Wiederhole! / Wiederholt!",
+              "word": "Répète! / Répétez!"
+            },
+            {
+              "id": "fr_8_36",
+              "de": "Versteht ihr?",
+              "word": "Vous comprenez?"
+            },
+            {
+              "id": "fr_8_37",
+              "de": "der Satz",
+              "word": "la phrase"
+            },
+            {
+              "id": "fr_8_38",
+              "de": "lauter",
+              "word": "plus fort"
+            },
+            {
+              "id": "fr_8_39",
+              "de": "bitte (Duzen)",
+              "word": "s'il te plaît"
+            },
+            {
+              "id": "fr_8_40",
+              "de": "bitte (Siezen)",
+              "word": "s'il vous plaît"
+            },
+            {
+              "id": "fr_8_41",
+              "de": "noch einmal",
+              "word": "encore une fois"
+            },
+            {
+              "id": "fr_8_42",
+              "de": "bravo",
+              "word": "bravo"
+            },
+            {
+              "id": "fr_8_43",
+              "de": "weitermachen",
+              "word": "continuer"
+            },
+            {
+              "id": "fr_8_44",
+              "de": "Ich verstehe nicht.",
+              "word": "Je ne comprends pas."
+            },
+            {
+              "id": "fr_8_45",
+              "de": "Können Sie wiederholen?",
+              "word": "Vous pouvez répéter?"
+            },
+            {
+              "id": "fr_8_46",
+              "de": "Nimm! / Nehmt!",
+              "word": "Prends! / Prenez!"
+            },
+            {
+              "id": "fr_8_47",
+              "de": "Lies! / Lest!",
+              "word": "Lis! / Lisez!"
+            },
+            {
+              "id": "fr_8_48",
+              "de": "der Text",
+              "word": "le texte"
+            },
+            {
+              "id": "fr_8_49",
+              "de": "Antworte! / Antwortet!",
+              "word": "Réponds! / Répondez!"
+            },
+            {
+              "id": "fr_8_50",
+              "de": "suchen",
+              "word": "chercher"
+            },
+            {
+              "id": "fr_8_51",
+              "de": "das Wort",
+              "word": "le mot"
+            },
+            {
+              "id": "fr_8_52",
+              "de": "finden",
+              "word": "trouver"
+            },
+            {
+              "id": "fr_8_53",
+              "de": "Schreibe! / Schreibt!",
+              "word": "Écris! / Écrivez!"
+            },
+            {
+              "id": "fr_8_54",
+              "de": "schließen / zumachen",
+              "word": "fermer"
+            },
+            {
+              "id": "fr_8_55",
+              "de": "das Buch",
+              "word": "le livre"
+            },
+            {
+              "id": "fr_8_56",
+              "de": "jetzt",
+              "word": "maintenant"
+            },
+            {
+              "id": "fr_8_57",
+              "de": "die Hausaufgaben",
+              "word": "les devoirs (m. pl.)"
+            },
+            {
+              "id": "fr_8_58",
+              "de": "das Fenster",
+              "word": "la fenêtre"
+            },
+            {
+              "id": "fr_8_59",
+              "de": "die Tür",
+              "word": "la porte"
+            },
+            {
+              "id": "fr_8_60",
+              "de": "der Tisch",
+              "word": "la table"
+            },
+            {
+              "id": "fr_8_61",
+              "de": "der Stuhl",
+              "word": "la chaise"
+            },
+            {
+              "id": "fr_8_62",
+              "de": "die Tafel",
+              "word": "le tableau"
+            },
+            {
+              "id": "fr_8_63",
+              "de": "der Schreibtisch",
+              "word": "le bureau"
+            },
+            {
+              "id": "fr_8_64",
+              "de": "ein Regal",
+              "word": "une étagère"
+            }
+          ]
+        },
+        {
+          "id": "fr_9",
+          "name": "Unité 9: L'appartement – Wohnung & Präpositionen",
+          "cards": [
+            {
+              "id": "fr_9_1",
+              "de": "ein Schrank",
+              "word": "une armoire"
+            },
+            {
+              "id": "fr_9_2",
+              "de": "das Bett",
+              "word": "le lit"
+            },
+            {
+              "id": "fr_9_3",
+              "de": "die Ecke",
+              "word": "le coin"
+            },
+            {
+              "id": "fr_9_4",
+              "de": "das Foto",
+              "word": "la photo"
+            },
+            {
+              "id": "fr_9_5",
+              "de": "die Wand / Mauer",
+              "word": "le mur"
+            },
+            {
+              "id": "fr_9_6",
+              "de": "ein Computer",
+              "word": "un ordinateur"
+            },
+            {
+              "id": "fr_9_7",
+              "de": "die Pflanze",
+              "word": "la plante"
+            },
+            {
+              "id": "fr_9_8",
+              "de": "die Gitarre",
+              "word": "la guitare"
+            },
+            {
+              "id": "fr_9_9",
+              "de": "die Konsole",
+              "word": "la console"
+            },
+            {
+              "id": "fr_9_10",
+              "de": "eine Lautsprecherbox",
+              "word": "une enceinte"
+            },
+            {
+              "id": "fr_9_11",
+              "de": "das Poster",
+              "word": "le poster"
+            },
+            {
+              "id": "fr_9_12",
+              "de": "auf / an",
+              "word": "sur"
+            },
+            {
+              "id": "fr_9_13",
+              "de": "unter",
+              "word": "sous"
+            },
+            {
+              "id": "fr_9_14",
+              "de": "vor",
+              "word": "devant"
+            },
+            {
+              "id": "fr_9_15",
+              "de": "hinter",
+              "word": "derrière"
+            },
+            {
+              "id": "fr_9_16",
+              "de": "links (von)",
+              "word": "à gauche (de)"
+            },
+            {
+              "id": "fr_9_17",
+              "de": "rechts (von)",
+              "word": "à droite (de)"
+            },
+            {
+              "id": "fr_9_18",
+              "de": "heute",
+              "word": "aujourd'hui"
+            },
+            {
+              "id": "fr_9_19",
+              "de": "besichtigen",
+              "word": "visiter"
+            },
+            {
+              "id": "fr_9_20",
+              "de": "eine Wohnung",
+              "word": "un appartement"
+            },
+            {
+              "id": "fr_9_21",
+              "de": "ein Eingang / eine Diele",
+              "word": "une entrée"
+            },
+            {
+              "id": "fr_9_22",
+              "de": "der Flur",
+              "word": "le couloir"
+            },
+            {
+              "id": "fr_9_23",
+              "de": "das Badezimmer",
+              "word": "la salle de bains"
+            },
+            {
+              "id": "fr_9_24",
+              "de": "die Toilette",
+              "word": "les toilettes (f. pl.)"
+            },
+            {
+              "id": "fr_9_25",
+              "de": "bei mir (zu Hause)",
+              "word": "chez moi"
+            },
+            {
+              "id": "fr_9_26",
+              "de": "natürlich / selbstverständlich",
+              "word": "bien sûr"
+            },
+            {
+              "id": "fr_9_27",
+              "de": "das Durcheinander",
+              "word": "le bazar (fam.)"
+            },
+            {
+              "id": "fr_9_28",
+              "de": "ein Ort / eine Stelle",
+              "word": "un endroit"
+            },
+            {
+              "id": "fr_9_29",
+              "de": "Lieblings-",
+              "word": "préféré / préférée"
+            },
+            {
+              "id": "fr_9_30",
+              "de": "um ... zu / zum ...",
+              "word": "pour (+ inf.)"
+            },
+            {
+              "id": "fr_9_31",
+              "de": "träumen",
+              "word": "rêver"
+            },
+            {
+              "id": "fr_9_32",
+              "de": "die Aussicht",
+              "word": "la vue"
+            },
+            {
+              "id": "fr_9_33",
+              "de": "der Fernseher",
+              "word": "la télé (fam.)"
+            },
+            {
+              "id": "fr_9_34",
+              "de": "Pst!",
+              "word": "Chut!"
+            },
+            {
+              "id": "fr_9_35",
+              "de": "das ist nicht mein Ding",
+              "word": "ce n'est pas mon truc (fam.)"
+            },
+            {
+              "id": "fr_9_36",
+              "de": "sehr lieben",
+              "word": "adorer"
+            },
+            {
+              "id": "fr_9_37",
+              "de": "das",
+              "word": "ça / cela"
+            },
+            {
+              "id": "fr_9_38",
+              "de": "gegenüber von",
+              "word": "en face de"
+            },
+            {
+              "id": "fr_9_39",
+              "de": "neben",
+              "word": "à côté de"
+            },
+            {
+              "id": "fr_9_40",
+              "de": "die Dusche",
+              "word": "la douche"
+            },
+            {
+              "id": "fr_9_41",
+              "de": "sehr",
+              "word": "très"
+            },
+            {
+              "id": "fr_9_42",
+              "de": "stylish",
+              "word": "design"
+            },
+            {
+              "id": "fr_9_43",
+              "de": "die Küche",
+              "word": "la cuisine"
+            },
+            {
+              "id": "fr_9_44",
+              "de": "das Wohnzimmer",
+              "word": "le salon"
+            },
+            {
+              "id": "fr_9_45",
+              "de": "das Ding / die Sache",
+              "word": "le truc (fam.)"
+            },
+            {
+              "id": "fr_9_46",
+              "de": "gern mögen",
+              "word": "aimer bien"
+            }
+          ]
+        },
+        {
+          "id": "fr_10",
+          "name": "Unité 10: Les activités – Hobbys & Beschreibungen",
+          "cards": [
+            {
+              "id": "fr_10_1",
+              "de": "hassen",
+              "word": "détester"
+            },
+            {
+              "id": "fr_10_2",
+              "de": "der Spieler / die Spielerin",
+              "word": "le joueur / la joueuse"
+            },
+            {
+              "id": "fr_10_3",
+              "de": "der Sänger / die Sängerin",
+              "word": "le chanteur / la chanteuse"
+            },
+            {
+              "id": "fr_10_4",
+              "de": "die Gruppe / Band",
+              "word": "le groupe"
+            },
+            {
+              "id": "fr_10_5",
+              "de": "machen / tun",
+              "word": "faire"
+            },
+            {
+              "id": "fr_10_6",
+              "de": "etw. als Hobby ausüben",
+              "word": "faire du / de la"
+            },
+            {
+              "id": "fr_10_7",
+              "de": "das Klavier",
+              "word": "le piano"
+            },
+            {
+              "id": "fr_10_8",
+              "de": "der Comic",
+              "word": "la BD (bande dessinée)"
+            },
+            {
+              "id": "fr_10_9",
+              "de": "der Kampfsport",
+              "word": "les arts martiaux (m. pl.)"
+            },
+            {
+              "id": "fr_10_10",
+              "de": "ich nicht",
+              "word": "moi non"
+            },
+            {
+              "id": "fr_10_11",
+              "de": "ich auch nicht",
+              "word": "moi non plus"
+            },
+            {
+              "id": "fr_10_12",
+              "de": "doch ich schon",
+              "word": "moi si"
+            },
+            {
+              "id": "fr_10_13",
+              "de": "das Klettern",
+              "word": "l'escalade (f.)"
+            },
+            {
+              "id": "fr_10_14",
+              "de": "weil",
+              "word": "parce que"
+            },
+            {
+              "id": "fr_10_15",
+              "de": "eine Freizeitaktivität",
+              "word": "une activité"
+            },
+            {
+              "id": "fr_10_16",
+              "de": "der Rap",
+              "word": "le rap"
+            },
+            {
+              "id": "fr_10_17",
+              "de": "der Look / das Outfit",
+              "word": "le look"
+            },
+            {
+              "id": "fr_10_18",
+              "de": "das Leben",
+              "word": "la vie"
+            },
+            {
+              "id": "fr_10_19",
+              "de": "klein",
+              "word": "petit / petite"
+            },
+            {
+              "id": "fr_10_20",
+              "de": "groß",
+              "word": "grand / grande"
+            },
+            {
+              "id": "fr_10_21",
+              "de": "ein Instrument",
+              "word": "un instrument"
+            },
+            {
+              "id": "fr_10_22",
+              "de": "der Star",
+              "word": "la star"
+            },
+            {
+              "id": "fr_10_23",
+              "de": "hübsch",
+              "word": "joli / jolie"
+            },
+            {
+              "id": "fr_10_24",
+              "de": "hässlich",
+              "word": "moche"
+            },
+            {
+              "id": "fr_10_25",
+              "de": "schwarz",
+              "word": "noir / noire"
+            },
+            {
+              "id": "fr_10_26",
+              "de": "weiß",
+              "word": "blanc / blanche"
+            },
+            {
+              "id": "fr_10_27",
+              "de": "gelb",
+              "word": "jaune"
+            },
+            {
+              "id": "fr_10_28",
+              "de": "rot",
+              "word": "rouge"
+            },
+            {
+              "id": "fr_10_29",
+              "de": "blau",
+              "word": "bleu / bleue"
+            },
+            {
+              "id": "fr_10_30",
+              "de": "grün",
+              "word": "vert / verte"
+            },
+            {
+              "id": "fr_10_31",
+              "de": "nicht",
+              "word": "ne ... pas"
+            },
+            {
+              "id": "fr_10_32",
+              "de": "nicht mehr",
+              "word": "ne ... plus"
+            },
+            {
+              "id": "fr_10_33",
+              "de": "die Sachen",
+              "word": "les affaires (f. pl.)"
+            },
+            {
+              "id": "fr_10_34",
+              "de": "zu / zu sehr",
+              "word": "trop"
+            },
+            {
+              "id": "fr_10_35",
+              "de": "wirklich",
+              "word": "vraiment"
+            },
+            {
+              "id": "fr_10_36",
+              "de": "Hausaufgaben machen",
+              "word": "faire les devoirs"
+            },
+            {
+              "id": "fr_10_37",
+              "de": "im Internet surfen",
+              "word": "surfer (sur Internet)"
+            },
+            {
+              "id": "fr_10_38",
+              "de": "das Schild",
+              "word": "la pancarte"
+            }
+          ]
+        },
+        {
+          "id": "fr_11",
+          "name": "Unité 11: L'heure – Uhrzeit & Stundenplan",
+          "cards": [
+            {
+              "id": "fr_11_1",
+              "de": "hineingehen / eintreten",
+              "word": "entrer"
+            },
+            {
+              "id": "fr_11_2",
+              "de": "eine Stunde / Uhrzeit",
+              "word": "une heure"
+            },
+            {
+              "id": "fr_11_3",
+              "de": "Wie spät ist es?",
+              "word": "Il est quelle heure?"
+            },
+            {
+              "id": "fr_11_4",
+              "de": "Viertel nach",
+              "word": "et quart"
+            },
+            {
+              "id": "fr_11_5",
+              "de": "halb",
+              "word": "et demie"
+            },
+            {
+              "id": "fr_11_6",
+              "de": "Viertel vor",
+              "word": "moins le quart"
+            },
+            {
+              "id": "fr_11_7",
+              "de": "12 Uhr mittags",
+              "word": "midi"
+            },
+            {
+              "id": "fr_11_8",
+              "de": "Mitternacht",
+              "word": "minuit"
+            },
+            {
+              "id": "fr_11_9",
+              "de": "Hallo? (am Telefon)",
+              "word": "Allô?"
+            },
+            {
+              "id": "fr_11_10",
+              "de": "(bei jdm) vorbeikommen",
+              "word": "passer (chez qn)"
+            },
+            {
+              "id": "fr_11_11",
+              "de": "morgen",
+              "word": "demain"
+            },
+            {
+              "id": "fr_11_12",
+              "de": "Um wie viel Uhr?",
+              "word": "À quelle heure?"
+            },
+            {
+              "id": "fr_11_13",
+              "de": "wir könnten / man könnte",
+              "word": "on pourrait"
+            },
+            {
+              "id": "fr_11_14",
+              "de": "Geht klar! / Das klappt!",
+              "word": "Ça marche! (fam.)"
+            },
+            {
+              "id": "fr_11_15",
+              "de": "Montag",
+              "word": "lundi"
+            },
+            {
+              "id": "fr_11_16",
+              "de": "Dienstag",
+              "word": "mardi"
+            },
+            {
+              "id": "fr_11_17",
+              "de": "Mittwoch",
+              "word": "mercredi"
+            },
+            {
+              "id": "fr_11_18",
+              "de": "Donnerstag",
+              "word": "jeudi"
+            },
+            {
+              "id": "fr_11_19",
+              "de": "Freitag",
+              "word": "vendredi"
+            },
+            {
+              "id": "fr_11_20",
+              "de": "Samstag",
+              "word": "samedi"
+            },
+            {
+              "id": "fr_11_21",
+              "de": "Sonntag",
+              "word": "dimanche"
+            },
+            {
+              "id": "fr_11_22",
+              "de": "der Morgen / Vormittag",
+              "word": "le matin"
+            },
+            {
+              "id": "fr_11_23",
+              "de": "der Nachmittag",
+              "word": "l'après-midi (m.)"
+            },
+            {
+              "id": "fr_11_24",
+              "de": "ein Stundenplan",
+              "word": "un emploi du temps"
+            },
+            {
+              "id": "fr_11_25",
+              "de": "Geschichte und Erdkunde",
+              "word": "l'histoire-géo (f.)"
+            },
+            {
+              "id": "fr_11_26",
+              "de": "Erdkunde / Geographie",
+              "word": "la géographie"
+            },
+            {
+              "id": "fr_11_27",
+              "de": "Geschichte",
+              "word": "l'histoire (f.)"
+            },
+            {
+              "id": "fr_11_28",
+              "de": "die Pause",
+              "word": "la récré (fam.)"
+            },
+            {
+              "id": "fr_11_29",
+              "de": "Englisch",
+              "word": "l'anglais (m.)"
+            },
+            {
+              "id": "fr_11_30",
+              "de": "Sport (Schulfach)",
+              "word": "l'EPS (f.)"
+            },
+            {
+              "id": "fr_11_31",
+              "de": "Mathe",
+              "word": "les maths (f. pl.)"
+            },
+            {
+              "id": "fr_11_32",
+              "de": "Biologie und Geologie (Schulfach)",
+              "word": "les SVT (f. pl.)"
+            },
+            {
+              "id": "fr_11_33",
+              "de": "Technik (Schulfach)",
+              "word": "la techno"
+            },
+            {
+              "id": "fr_11_34",
+              "de": "Physik (Schulfach)",
+              "word": "les sciences physiques (f. pl.)"
+            },
+            {
+              "id": "fr_11_35",
+              "de": "Latein",
+              "word": "le latin"
+            },
+            {
+              "id": "fr_11_36",
+              "de": "Kunst (Schulfach)",
+              "word": "les arts plastiques (m. pl.)"
+            },
+            {
+              "id": "fr_11_37",
+              "de": "in (einem Fach)",
+              "word": "en ( + Fach)"
+            },
+            {
+              "id": "fr_11_38",
+              "de": "die Kantine / der Speisesaal",
+              "word": "la cantine"
+            },
+            {
+              "id": "fr_11_39",
+              "de": "die Freiarbeit / Aufsichtsstunde",
+              "word": "la permanence"
+            },
+            {
+              "id": "fr_11_40",
+              "de": "ich kann nicht",
+              "word": "je ne peux pas"
+            },
+            {
+              "id": "fr_11_41",
+              "de": "Aber nein! / Nicht doch!",
+              "word": "Mais non! (fam.)"
+            },
+            {
+              "id": "fr_11_42",
+              "de": "die Schule (Mittelstufe)",
+              "word": "le collège"
+            },
+            {
+              "id": "fr_11_43",
+              "de": "ein Eingang / eine Diele",
+              "word": "une entrée"
+            },
+            {
+              "id": "fr_11_44",
+              "de": "der Flur",
+              "word": "le couloir"
+            },
+            {
+              "id": "fr_11_45",
+              "de": "die Toilette",
+              "word": "les toilettes (f. pl.)"
+            },
+            {
+              "id": "fr_11_46",
+              "de": "der (Unterrichts-)Raum",
+              "word": "la salle"
+            },
+            {
+              "id": "fr_11_47",
+              "de": "das Lehrerzimmer",
+              "word": "la salle des profs"
+            },
+            {
+              "id": "fr_11_48",
+              "de": "das Büro",
+              "word": "le bureau"
+            },
+            {
+              "id": "fr_11_49",
+              "de": "die Schulbibliothek",
+              "word": "le CDI"
+            },
+            {
+              "id": "fr_11_50",
+              "de": "eine Info",
+              "word": "une info (fam.)"
+            },
+            {
+              "id": "fr_11_51",
+              "de": "der/die Schulbetreuer/in",
+              "word": "le / la CPE"
+            }
+          ]
+        },
+        {
+          "id": "fr_12",
+          "name": "Unité 12: La journée – Schulalltag & Verben",
+          "cards": [
+            {
+              "id": "fr_12_1",
+              "de": "die Mission",
+              "word": "la mission"
+            },
+            {
+              "id": "fr_12_2",
+              "de": "das Papier / Dokument",
+              "word": "le papier"
+            },
+            {
+              "id": "fr_12_3",
+              "de": "gehen",
+              "word": "aller"
+            },
+            {
+              "id": "fr_12_4",
+              "de": "ich gehe",
+              "word": "je vais"
+            },
+            {
+              "id": "fr_12_5",
+              "de": "du gehst",
+              "word": "tu vas"
+            },
+            {
+              "id": "fr_12_6",
+              "de": "er / sie / man geht",
+              "word": "il / elle / on va"
+            },
+            {
+              "id": "fr_12_7",
+              "de": "wir gehen",
+              "word": "nous allons"
+            },
+            {
+              "id": "fr_12_8",
+              "de": "ihr geht / Sie gehen",
+              "word": "vous allez"
+            },
+            {
+              "id": "fr_12_9",
+              "de": "sie gehen",
+              "word": "ils / elles vont"
+            },
+            {
+              "id": "fr_12_10",
+              "de": "Verspätungszettel",
+              "word": "le billet de retard"
+            },
+            {
+              "id": "fr_12_11",
+              "de": "die Lösung",
+              "word": "la solution"
+            },
+            {
+              "id": "fr_12_12",
+              "de": "der Schwachpunkt",
+              "word": "le point faible"
+            },
+            {
+              "id": "fr_12_13",
+              "de": "streng",
+              "word": "sévère"
+            },
+            {
+              "id": "fr_12_14",
+              "de": "der/die Schulleiter/in",
+              "word": "le principal / la principale"
+            },
+            {
+              "id": "fr_12_15",
+              "de": "organisieren",
+              "word": "organiser"
+            },
+            {
+              "id": "fr_12_16",
+              "de": "in Eile sein",
+              "word": "être pressé"
+            },
+            {
+              "id": "fr_12_17",
+              "de": "der/die Bibliothekar/in",
+              "word": "le / la documentaliste"
+            },
+            {
+              "id": "fr_12_18",
+              "de": "aufräumen",
+              "word": "ranger"
+            },
+            {
+              "id": "fr_12_19",
+              "de": "vorbereiten",
+              "word": "préparer"
+            },
+            {
+              "id": "fr_12_20",
+              "de": "ein Vortrag / Referat",
+              "word": "un exposé"
+            },
+            {
+              "id": "fr_12_21",
+              "de": "vergessen",
+              "word": "oublier"
+            },
+            {
+              "id": "fr_12_22",
+              "de": "alles",
+              "word": "tout"
+            },
+            {
+              "id": "fr_12_23",
+              "de": "die Aufsichtsperson",
+              "word": "le surveillant / la surveillante"
+            },
+            {
+              "id": "fr_12_24",
+              "de": "beaufsichtigen / überwachen",
+              "word": "surveiller"
+            },
+            {
+              "id": "fr_12_25",
+              "de": "Achtung!",
+              "word": "Attention!"
+            },
+            {
+              "id": "fr_12_26",
+              "de": "telefonieren",
+              "word": "téléphoner"
+            },
+            {
+              "id": "fr_12_27",
+              "de": "essen",
+              "word": "manger"
+            },
+            {
+              "id": "fr_12_28",
+              "de": "sogar",
+              "word": "même"
+            },
+            {
+              "id": "fr_12_29",
+              "de": "überall",
+              "word": "partout"
+            },
+            {
+              "id": "fr_12_30",
+              "de": "unser / unsere",
+              "word": "notre / nos"
+            },
+            {
+              "id": "fr_12_31",
+              "de": "euer / eure",
+              "word": "votre / vos"
+            },
+            {
+              "id": "fr_12_32",
+              "de": "ihr / ihre (Plural)",
+              "word": "leur / leurs"
+            },
+            {
+              "id": "fr_12_33",
+              "de": "Warum ...?",
+              "word": "Pourquoi...?"
+            },
+            {
+              "id": "fr_12_34",
+              "de": "die Karte",
+              "word": "la carte"
+            },
+            {
+              "id": "fr_12_35",
+              "de": "deutsch",
+              "word": "allemand / allemande"
+            },
+            {
+              "id": "fr_12_36",
+              "de": "der/die Brieffreund/in",
+              "word": "le / la corres (fam.)"
+            },
+            {
+              "id": "fr_12_37",
+              "de": "schon / bereits",
+              "word": "déjà"
+            },
+            {
+              "id": "fr_12_38",
+              "de": "der Tag (Ablauf)",
+              "word": "la journée"
+            },
+            {
+              "id": "fr_12_39",
+              "de": "dann / danach",
+              "word": "ensuite"
+            },
+            {
+              "id": "fr_12_40",
+              "de": "das Schulfach",
+              "word": "la matière"
+            },
+            {
+              "id": "fr_12_41",
+              "de": "total / voll",
+              "word": "trop (fam.)"
+            },
+            {
+              "id": "fr_12_42",
+              "de": "merkwürdig / komisch",
+              "word": "bizarre"
+            },
+            {
+              "id": "fr_12_43",
+              "de": "der Albtraum",
+              "word": "le cauchemar"
+            },
+            {
+              "id": "fr_12_44",
+              "de": "der Schulhof",
+              "word": "la cour"
+            },
+            {
+              "id": "fr_12_45",
+              "de": "der Platz (Sport)",
+              "word": "le terrain"
+            },
+            {
+              "id": "fr_12_46",
+              "de": "Es kommt darauf an.",
+              "word": "Ça dépend."
+            },
+            {
+              "id": "fr_12_47",
+              "de": "Glück haben",
+              "word": "avoir de la chance"
+            },
+            {
+              "id": "fr_12_48",
+              "de": "erklären",
+              "word": "expliquer"
+            },
+            {
+              "id": "fr_12_49",
+              "de": "seine Lebensgeschichte erzählen",
+              "word": "raconter sa vie (fam.)"
+            },
+            {
+              "id": "fr_12_50",
+              "de": "meckern / motzen",
+              "word": "râler (fam.)"
+            },
+            {
+              "id": "fr_12_51",
+              "de": "beenden / aufhören",
+              "word": "terminer"
+            },
+            {
+              "id": "fr_12_52",
+              "de": "anfangen / beginnen",
+              "word": "commencer"
+            },
+            {
+              "id": "fr_12_53",
+              "de": "das Mal",
+              "word": "la fois"
+            },
+            {
+              "id": "fr_12_54",
+              "de": "Es/Das reicht!",
+              "word": "Ça suffit!"
+            },
+            {
+              "id": "fr_12_55",
+              "de": "Wann ...?",
+              "word": "Quand...?"
+            },
+            {
+              "id": "fr_12_56",
+              "de": "Unterricht haben",
+              "word": "avoir cours"
+            },
+            {
+              "id": "fr_12_57",
+              "de": "seine Meinung äußern",
+              "word": "donner son avis"
+            },
+            {
+              "id": "fr_12_58",
+              "de": "geben / aufgeben",
+              "word": "donner"
+            },
+            {
+              "id": "fr_12_59",
+              "de": "der Kommentar",
+              "word": "le commentaire"
+            },
+            {
+              "id": "fr_12_60",
+              "de": "ein Jahr",
+              "word": "un an"
+            },
+            {
+              "id": "fr_12_61",
+              "de": "eine Stimmung / Atmosphäre",
+              "word": "une ambiance"
+            },
+            {
+              "id": "fr_12_62",
+              "de": "viel / viele",
+              "word": "beaucoup de"
+            },
+            {
+              "id": "fr_12_63",
+              "de": "zu viel / zu viele",
+              "word": "trop de"
+            },
+            {
+              "id": "fr_12_64",
+              "de": "genug / genügend",
+              "word": "assez de"
+            },
+            {
+              "id": "fr_12_65",
+              "de": "nicht genug",
+              "word": "ne ... pas assez de"
+            },
+            {
+              "id": "fr_12_66",
+              "de": "kein / keine",
+              "word": "ne ... pas de"
+            },
+            {
+              "id": "fr_12_67",
+              "de": "kein ... mehr",
+              "word": "ne ... plus de"
+            },
+            {
+              "id": "fr_12_68",
+              "de": "ich finde dass",
+              "word": "je trouve que"
+            },
+            {
+              "id": "fr_12_69",
+              "de": "der Schuljahresbeginn",
+              "word": "la rentrée"
+            },
+            {
+              "id": "fr_12_70",
+              "de": "ein Aufzug",
+              "word": "un ascenseur"
+            },
+            {
+              "id": "fr_12_71",
+              "de": "der Lärm",
+              "word": "le bruit"
+            },
+            {
+              "id": "fr_12_72",
+              "de": "verschwenden",
+              "word": "gaspiller"
+            },
+            {
+              "id": "fr_12_73",
+              "de": "das Brot",
+              "word": "le pain"
+            },
+            {
+              "id": "fr_12_74",
+              "de": "das Gericht / Hauptgericht",
+              "word": "le plat"
+            },
+            {
+              "id": "fr_12_75",
+              "de": "sauber",
+              "word": "propre"
+            },
+            {
+              "id": "fr_12_76",
+              "de": "schnell",
+              "word": "vite"
+            },
+            {
+              "id": "fr_12_77",
+              "de": "Zu Hilfe!",
+              "word": "Au secours!"
+            }
+          ]
+        },
+        {
+          "id": "fr_13",
+          "name": "Unité 13: La cantine – Essen & Trinken",
+          "cards": [
+            {
+              "id": "fr_13_1",
+              "de": "gut / lecker",
+              "word": "bon / bonne"
+            },
+            {
+              "id": "fr_13_2",
+              "de": "das Menü",
+              "word": "le menu"
+            },
+            {
+              "id": "fr_13_3",
+              "de": "eine Vorspeise",
+              "word": "une entrée"
+            },
+            {
+              "id": "fr_13_4",
+              "de": "die Suppe",
+              "word": "la soupe"
+            },
+            {
+              "id": "fr_13_5",
+              "de": "die Karotte / Möhre",
+              "word": "la carotte"
+            },
+            {
+              "id": "fr_13_6",
+              "de": "der Reis",
+              "word": "le riz"
+            },
+            {
+              "id": "fr_13_7",
+              "de": "das Gemüse",
+              "word": "le légume"
+            },
+            {
+              "id": "fr_13_8",
+              "de": "das Steak",
+              "word": "le steak"
+            },
+            {
+              "id": "fr_13_9",
+              "de": "das Gratin / der Auflauf",
+              "word": "le gratin"
+            },
+            {
+              "id": "fr_13_10",
+              "de": "der Kürbis",
+              "word": "le potiron"
+            },
+            {
+              "id": "fr_13_11",
+              "de": "der Nachtisch / das Dessert",
+              "word": "le dessert"
+            },
+            {
+              "id": "fr_13_12",
+              "de": "der Apfelkuchen",
+              "word": "le gâteau aux pommes"
+            },
+            {
+              "id": "fr_13_13",
+              "de": "der Apfel",
+              "word": "la pomme"
+            },
+            {
+              "id": "fr_13_14",
+              "de": "die Frucht / das Obst",
+              "word": "le fruit"
+            },
+            {
+              "id": "fr_13_15",
+              "de": "Hunger haben",
+              "word": "avoir faim"
+            },
+            {
+              "id": "fr_13_16",
+              "de": "Durst haben",
+              "word": "avoir soif"
+            },
+            {
+              "id": "fr_13_17",
+              "de": "nehmen",
+              "word": "prendre"
+            },
+            {
+              "id": "fr_13_18",
+              "de": "orange",
+              "word": "orange (adj.)"
+            },
+            {
+              "id": "fr_13_19",
+              "de": "so",
+              "word": "comme ça"
+            },
+            {
+              "id": "fr_13_20",
+              "de": "ohne",
+              "word": "sans"
+            },
+            {
+              "id": "fr_13_21",
+              "de": "das Fleisch",
+              "word": "la viande"
+            },
+            {
+              "id": "fr_13_22",
+              "de": "vegetarisch",
+              "word": "végétarien / végétarienne"
+            },
+            {
+              "id": "fr_13_23",
+              "de": "Guten Appetit!",
+              "word": "Bon appétit!"
+            },
+            {
+              "id": "fr_13_24",
+              "de": "Reichst du mir ...?",
+              "word": "Tu me passes...?"
+            },
+            {
+              "id": "fr_13_25",
+              "de": "das Wasser",
+              "word": "l'eau (f.)"
+            },
+            {
+              "id": "fr_13_26",
+              "de": "bäh",
+              "word": "beurk (fam.)"
+            },
+            {
+              "id": "fr_13_27",
+              "de": "das Salz",
+              "word": "le sel"
+            }
+          ]
+        },
+        {
+          "id": "fr_14",
+          "name": "Unité 14: Le pique-nique – Einkaufen & Verabredungen",
+          "cards": [
+            {
+              "id": "fr_14_1",
+              "de": "das Picknick",
+              "word": "le pique-nique"
+            },
+            {
+              "id": "fr_14_2",
+              "de": "am Ufer von etw.",
+              "word": "au bord de qc"
+            },
+            {
+              "id": "fr_14_3",
+              "de": "das Festival",
+              "word": "le festival"
+            },
+            {
+              "id": "fr_14_4",
+              "de": "der Markt",
+              "word": "le marché"
+            },
+            {
+              "id": "fr_14_5",
+              "de": "die Liste",
+              "word": "la liste"
+            },
+            {
+              "id": "fr_14_6",
+              "de": "die Einkäufe",
+              "word": "les courses (f. pl.)"
+            },
+            {
+              "id": "fr_14_7",
+              "de": "man braucht / wir brauchen etw.",
+              "word": "il faut qc"
+            },
+            {
+              "id": "fr_14_8",
+              "de": "das Mehl",
+              "word": "la farine"
+            },
+            {
+              "id": "fr_14_9",
+              "de": "die Milch",
+              "word": "le lait"
+            },
+            {
+              "id": "fr_14_10",
+              "de": "die Kartoffelchips",
+              "word": "les chips (f. pl.)"
+            },
+            {
+              "id": "fr_14_11",
+              "de": "ein Ei / die Eier",
+              "word": "un œuf / les œufs"
+            },
+            {
+              "id": "fr_14_12",
+              "de": "die Kartoffel",
+              "word": "la pomme de terre"
+            },
+            {
+              "id": "fr_14_13",
+              "de": "die Erdbeere",
+              "word": "la fraise"
+            },
+            {
+              "id": "fr_14_14",
+              "de": "die Butter",
+              "word": "le beurre"
+            },
+            {
+              "id": "fr_14_15",
+              "de": "die Banane",
+              "word": "la banane"
+            },
+            {
+              "id": "fr_14_16",
+              "de": "der Käse",
+              "word": "le fromage"
+            },
+            {
+              "id": "fr_14_17",
+              "de": "der Schinken",
+              "word": "le jambon"
+            },
+            {
+              "id": "fr_14_18",
+              "de": "der Honig",
+              "word": "le miel"
+            },
+            {
+              "id": "fr_14_19",
+              "de": "die Cola",
+              "word": "le coca"
+            },
+            {
+              "id": "fr_14_20",
+              "de": "der Keks",
+              "word": "le biscuit"
+            },
+            {
+              "id": "fr_14_21",
+              "de": "der Pfeffer",
+              "word": "le poivre"
+            },
+            {
+              "id": "fr_14_22",
+              "de": "die Sahne / Crème fraîche",
+              "word": "la crème"
+            },
+            {
+              "id": "fr_14_23",
+              "de": "der Saft",
+              "word": "le jus"
+            },
+            {
+              "id": "fr_14_24",
+              "de": "der Zucker",
+              "word": "le sucre"
+            },
+            {
+              "id": "fr_14_25",
+              "de": "eine Orange / Apfelsine",
+              "word": "une orange"
+            },
+            {
+              "id": "fr_14_26",
+              "de": "das Getränk",
+              "word": "la boisson"
+            },
+            {
+              "id": "fr_14_27",
+              "de": "lecker (fam.)",
+              "word": "miam"
+            },
+            {
+              "id": "fr_14_28",
+              "de": "sich verabreden",
+              "word": "se donner rendez-vous"
+            },
+            {
+              "id": "fr_14_29",
+              "de": "(bei jdm) vorbeikommen",
+              "word": "passer (chez qn)"
+            },
+            {
+              "id": "fr_14_30",
+              "de": "um... Uhr",
+              "word": "à... heure(s)"
+            },
+            {
+              "id": "fr_14_31",
+              "de": "wir könnten / man könnte",
+              "word": "on pourrait"
+            },
+            {
+              "id": "fr_14_32",
+              "de": "Geht klar! / Das klappt!",
+              "word": "Ça marche! (fam.)"
+            },
+            {
+              "id": "fr_14_33",
+              "de": "wir treffen uns (Ort/Zeit)",
+              "word": "on se retrouve à"
+            },
+            {
+              "id": "fr_14_34",
+              "de": "ich möchte gerne (etw. tun)",
+              "word": "je voudrais"
+            },
+            {
+              "id": "fr_14_35",
+              "de": "Sagt dir das zu? / Hast du Lust?",
+              "word": "Ça te dit? (fam.)"
+            },
+            {
+              "id": "fr_14_36",
+              "de": "etw. mitbringen",
+              "word": "apporter qc"
+            },
+            {
+              "id": "fr_14_37",
+              "de": "eine Idee",
+              "word": "une idée"
+            },
+            {
+              "id": "fr_14_38",
+              "de": "Gute Idee!",
+              "word": "Bonne idée!"
+            },
+            {
+              "id": "fr_14_39",
+              "de": "an diesem Wochenende",
+              "word": "ce week-end"
+            },
+            {
+              "id": "fr_14_40",
+              "de": "wollen",
+              "word": "vouloir"
+            },
+            {
+              "id": "fr_14_41",
+              "de": "können",
+              "word": "pouvoir"
+            },
+            {
+              "id": "fr_14_42",
+              "de": "bevorzugen / lieber mögen",
+              "word": "préférer"
+            },
+            {
+              "id": "fr_14_43",
+              "de": "der Film",
+              "word": "le film"
+            },
+            {
+              "id": "fr_14_44",
+              "de": "ein Workshop / Atelier",
+              "word": "un atelier"
+            },
+            {
+              "id": "fr_14_45",
+              "de": "der Garten",
+              "word": "le jardin"
+            },
+            {
+              "id": "fr_14_46",
+              "de": "teuer",
+              "word": "cher / chère"
+            },
+            {
+              "id": "fr_14_47",
+              "de": "kostenlos / gratis",
+              "word": "gratuit / gratuite"
+            },
+            {
+              "id": "fr_14_48",
+              "de": "die Vorstellung / Show",
+              "word": "le spectacle"
+            },
+            {
+              "id": "fr_14_49",
+              "de": "nicht so sehr / nicht so gern",
+              "word": "ne... pas trop"
+            },
+            {
+              "id": "fr_14_50",
+              "de": "etwas",
+              "word": "quelque chose"
+            },
+            {
+              "id": "fr_14_51",
+              "de": "jemand",
+              "word": "quelqu'un"
+            },
+            {
+              "id": "fr_14_52",
+              "de": "jdn anrufen",
+              "word": "appeler qn"
+            },
+            {
+              "id": "fr_14_53",
+              "de": "alle (wörtl. die ganze Welt)",
+              "word": "tout le monde"
+            },
+            {
+              "id": "fr_14_54",
+              "de": "der Hip-Hop",
+              "word": "le hip-hop"
+            },
+            {
+              "id": "fr_14_55",
+              "de": "die Elektromusik",
+              "word": "l'électro (f.)"
+            },
+            {
+              "id": "fr_14_56",
+              "de": "Warte!",
+              "word": "Attends!"
+            },
+            {
+              "id": "fr_14_57",
+              "de": "Mama",
+              "word": "maman"
+            }
+          ]
+        },
+        {
+          "id": "fr_15",
+          "name": "Unité 15: La cuisine – Kochen & Rezepte",
+          "cards": [
+            {
+              "id": "fr_15_1",
+              "de": "Papa",
+              "word": "papa"
+            },
+            {
+              "id": "fr_15_2",
+              "de": "einkaufen (Lebensmittel)",
+              "word": "faire les courses"
+            },
+            {
+              "id": "fr_15_3",
+              "de": "etw. kaufen",
+              "word": "acheter qc"
+            },
+            {
+              "id": "fr_15_4",
+              "de": "Wie viel(e)...?",
+              "word": "Combien de...?"
+            },
+            {
+              "id": "fr_15_5",
+              "de": "Wie viel...?",
+              "word": "Combien...?"
+            },
+            {
+              "id": "fr_15_6",
+              "de": "die Flasche",
+              "word": "la bouteille"
+            },
+            {
+              "id": "fr_15_7",
+              "de": "die Madeleine (Gebäck)",
+              "word": "la madeleine"
+            },
+            {
+              "id": "fr_15_8",
+              "de": "das Paket / die Packung",
+              "word": "le paquet"
+            },
+            {
+              "id": "fr_15_9",
+              "de": "das Sandwich",
+              "word": "le sandwich"
+            },
+            {
+              "id": "fr_15_10",
+              "de": "das Geld",
+              "word": "l'argent (m.)"
+            },
+            {
+              "id": "fr_15_11",
+              "de": "ein Euro",
+              "word": "un euro"
+            },
+            {
+              "id": "fr_15_12",
+              "de": "das Kilo",
+              "word": "le kilo"
+            },
+            {
+              "id": "fr_15_13",
+              "de": "Darf es sonst noch etwas sein?",
+              "word": "Et avec ça?"
+            },
+            {
+              "id": "fr_15_14",
+              "de": "Das ist alles.",
+              "word": "C'est tout."
+            },
+            {
+              "id": "fr_15_15",
+              "de": "das macht (Preis)",
+              "word": "ça fait"
+            },
+            {
+              "id": "fr_15_16",
+              "de": "das kostet",
+              "word": "ça coûte"
+            },
+            {
+              "id": "fr_15_17",
+              "de": "das Baguette",
+              "word": "la baguette"
+            },
+            {
+              "id": "fr_15_18",
+              "de": "Was ist das?",
+              "word": "C'est quoi? (fam.)"
+            },
+            {
+              "id": "fr_15_19",
+              "de": "süß / gezuckert",
+              "word": "sucré / sucrée"
+            },
+            {
+              "id": "fr_15_20",
+              "de": "salzig / gesalzen",
+              "word": "salé / salée"
+            },
+            {
+              "id": "fr_15_21",
+              "de": "die Quiche (herzhafter Kuchen)",
+              "word": "la quiche"
+            },
+            {
+              "id": "fr_15_22",
+              "de": "die Chouquette (Gebäck)",
+              "word": "la chouquette"
+            },
+            {
+              "id": "fr_15_23",
+              "de": "das Geheimnis",
+              "word": "le secret"
+            },
+            {
+              "id": "fr_15_24",
+              "de": "die (Web-)Seite",
+              "word": "le site (web)"
+            },
+            {
+              "id": "fr_15_25",
+              "de": "das Kochen (hier)",
+              "word": "la cuisine"
+            },
+            {
+              "id": "fr_15_26",
+              "de": "die Chemie",
+              "word": "la chimie"
+            },
+            {
+              "id": "fr_15_27",
+              "de": "ein Beispiel",
+              "word": "un exemple"
+            },
+            {
+              "id": "fr_15_28",
+              "de": "die Form",
+              "word": "la forme"
+            },
+            {
+              "id": "fr_15_29",
+              "de": "die Beule",
+              "word": "la bosse"
+            },
+            {
+              "id": "fr_15_30",
+              "de": "die Temperatur",
+              "word": "la température"
+            },
+            {
+              "id": "fr_15_31",
+              "de": "der Backofen",
+              "word": "le four"
+            },
+            {
+              "id": "fr_15_32",
+              "de": "warm / heiß",
+              "word": "chaud / chaude"
+            },
+            {
+              "id": "fr_15_33",
+              "de": "kalt",
+              "word": "froid / froide"
+            },
+            {
+              "id": "fr_15_34",
+              "de": "der Teig",
+              "word": "la pâte"
+            },
+            {
+              "id": "fr_15_35",
+              "de": "der Schock",
+              "word": "le choc"
+            },
+            {
+              "id": "fr_15_36",
+              "de": "interessant",
+              "word": "intéressant / intéressante"
+            },
+            {
+              "id": "fr_15_37",
+              "de": "das Rezept",
+              "word": "la recette"
+            },
+            {
+              "id": "fr_15_38",
+              "de": "das Gramm",
+              "word": "le gramme"
+            },
+            {
+              "id": "fr_15_39",
+              "de": "das Backpulver / Hefe",
+              "word": "la levure"
+            }
+          ]
+        },
+        {
+          "id": "fr_16",
+          "name": "Unité 16: La fête – Feiern & Monate",
+          "cards": [
+            {
+              "id": "fr_16_1",
+              "de": "Herzlichen Glückwunsch zum Geburtstag!",
+              "word": "Joyeux anniversaire!"
+            },
+            {
+              "id": "fr_16_2",
+              "de": "ein Geburtstag",
+              "word": "un anniversaire"
+            },
+            {
+              "id": "fr_16_3",
+              "de": "erster / erste / erstes",
+              "word": "premier / première"
+            },
+            {
+              "id": "fr_16_4",
+              "de": "Januar",
+              "word": "janvier"
+            },
+            {
+              "id": "fr_16_5",
+              "de": "Februar",
+              "word": "février"
+            },
+            {
+              "id": "fr_16_6",
+              "de": "März",
+              "word": "mars"
+            },
+            {
+              "id": "fr_16_7",
+              "de": "April",
+              "word": "avril"
+            },
+            {
+              "id": "fr_16_8",
+              "de": "Mai",
+              "word": "mai"
+            },
+            {
+              "id": "fr_16_9",
+              "de": "Juni",
+              "word": "juin"
+            },
+            {
+              "id": "fr_16_10",
+              "de": "Juli",
+              "word": "juillet"
+            },
+            {
+              "id": "fr_16_11",
+              "de": "August",
+              "word": "août"
+            },
+            {
+              "id": "fr_16_12",
+              "de": "September",
+              "word": "septembre"
+            },
+            {
+              "id": "fr_16_13",
+              "de": "Oktober",
+              "word": "octobre"
+            },
+            {
+              "id": "fr_16_14",
+              "de": "November",
+              "word": "novembre"
+            },
+            {
+              "id": "fr_16_15",
+              "de": "Dezember",
+              "word": "décembre"
+            },
+            {
+              "id": "fr_16_16",
+              "de": "die Feier / das Fest",
+              "word": "la fête"
+            },
+            {
+              "id": "fr_16_17",
+              "de": "etw. feiern",
+              "word": "fêter qc"
+            },
+            {
+              "id": "fr_16_18",
+              "de": "jdn einladen",
+              "word": "inviter qn"
+            },
+            {
+              "id": "fr_16_19",
+              "de": "eine Einladung",
+              "word": "une invitation"
+            },
+            {
+              "id": "fr_16_20",
+              "de": "das Skateboard",
+              "word": "le skate"
+            },
+            {
+              "id": "fr_16_21",
+              "de": "der Abend (im Verlauf)",
+              "word": "la soirée"
+            },
+            {
+              "id": "fr_16_22",
+              "de": "das Zelten / der Zeltplatz",
+              "word": "le camping"
+            },
+            {
+              "id": "fr_16_23",
+              "de": "der Schlafsack",
+              "word": "le sac de couchage"
+            },
+            {
+              "id": "fr_16_24",
+              "de": "das Geschenk",
+              "word": "le cadeau"
+            },
+            {
+              "id": "fr_16_25",
+              "de": "Ich zähle auf dich.",
+              "word": "Je compte sur toi."
+            },
+            {
+              "id": "fr_16_26",
+              "de": "der Kuchen",
+              "word": "le gâteau"
+            },
+            {
+              "id": "fr_16_27",
+              "de": "das Tier",
+              "word": "l'animal (m.)"
+            },
+            {
+              "id": "fr_16_28",
+              "de": "der Schreibtisch / das Büro",
+              "word": "le bureau"
+            },
+            {
+              "id": "fr_16_29",
+              "de": "das Wasser",
+              "word": "l'eau (f.)"
+            },
+            {
+              "id": "fr_16_30",
+              "de": "das Spiel",
+              "word": "le jeu"
+            },
+            {
+              "id": "fr_16_31",
+              "de": "die Postkarte",
+              "word": "la carte postale"
+            },
+            {
+              "id": "fr_16_32",
+              "de": "der Spaziergang / die Spazierfahrt",
+              "word": "la balade"
+            },
+            {
+              "id": "fr_16_33",
+              "de": "das Mountainbike",
+              "word": "le VTT"
+            },
+            {
+              "id": "fr_16_34",
+              "de": "der Berg / das Gebirge",
+              "word": "la montagne"
+            }
+          ]
+        },
+        {
+          "id": "fr_17",
+          "name": "Unité 17: Les vacances – Ferien & Postkarten",
+          "cards": [
+            {
+              "id": "fr_17_1",
+              "de": "es regnet",
+              "word": "il pleut"
+            },
+            {
+              "id": "fr_17_2",
+              "de": "Es ist schön / kalt / warm.",
+              "word": "Il fait beau / froid / chaud."
+            },
+            {
+              "id": "fr_17_3",
+              "de": "die Sonne",
+              "word": "le soleil"
+            },
+            {
+              "id": "fr_17_4",
+              "de": "bleiben",
+              "word": "rester"
+            },
+            {
+              "id": "fr_17_5",
+              "de": "ich hoffe",
+              "word": "j'espère que"
+            },
+            {
+              "id": "fr_17_6",
+              "de": "ankommen",
+              "word": "arriver"
+            },
+            {
+              "id": "fr_17_7",
+              "de": "bald",
+              "word": "bientôt"
+            },
+            {
+              "id": "fr_17_8",
+              "de": "Bis bald!",
+              "word": "À bientôt!"
+            },
+            {
+              "id": "fr_17_9",
+              "de": "lieber / liebe",
+              "word": "cher / chère (+ Name)"
+            },
+            {
+              "id": "fr_17_10",
+              "de": "der Traum",
+              "word": "le rêve"
+            },
+            {
+              "id": "fr_17_11",
+              "de": "zuerst",
+              "word": "d'abord"
+            },
+            {
+              "id": "fr_17_12",
+              "de": "der Strand",
+              "word": "la plage"
+            },
+            {
+              "id": "fr_17_13",
+              "de": "nach Hause gehen / fahren",
+              "word": "rentrer"
+            },
+            {
+              "id": "fr_17_14",
+              "de": "danach",
+              "word": "après"
+            },
+            {
+              "id": "fr_17_15",
+              "de": "es ist Zeit für etw.",
+              "word": "c'est l'heure de"
+            },
+            {
+              "id": "fr_17_16",
+              "de": "der Mittagsschlaf",
+              "word": "la sieste"
+            },
+            {
+              "id": "fr_17_17",
+              "de": "das Handy",
+              "word": "le portable"
+            },
+            {
+              "id": "fr_17_18",
+              "de": "der Abend / abends",
+              "word": "le soir"
+            },
+            {
+              "id": "fr_17_19",
+              "de": "der Tag / tagsüber",
+              "word": "le jour"
+            },
+            {
+              "id": "fr_17_20",
+              "de": "der Tag (Dauer)",
+              "word": "la journée"
+            },
+            {
+              "id": "fr_17_21",
+              "de": "das Meer",
+              "word": "la mer"
+            },
+            {
+              "id": "fr_17_22",
+              "de": "draußen",
+              "word": "dehors"
+            },
+            {
+              "id": "fr_17_23",
+              "de": "lange",
+              "word": "longtemps"
+            },
+            {
+              "id": "fr_17_24",
+              "de": "der Vulkan",
+              "word": "le volcan"
+            },
+            {
+              "id": "fr_17_25",
+              "de": "leicht / einfach",
+              "word": "facile"
+            },
+            {
+              "id": "fr_17_26",
+              "de": "das Küsschen",
+              "word": "le bisou"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// ══════════════════════════════════════════
+// State Management (LocalStorage)
+// ══════════════════════════════════════════
+const PROFILES = [
+  { id: 'wereone', name: 'Wereone', color: '#3b82f6', emoji: 'W' },
+  { id: 'theone',  name: 'Theone',  color: '#e11d48', emoji: 'T' }
+];
+
+const BOX_INTERVALS = [0, 1, 3, 7, 21, 60]; // Tage
+const MAX_BOX = BOX_INTERVALS.length - 1;
+
+let currentProfile = null;
+
+function storageKey() {
+  return 'vokabeltrainer_v1_' + (currentProfile ? currentProfile.id : '_none');
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(storageKey());
+    if (saved) return JSON.parse(saved);
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(storageKey(), JSON.stringify(state));
+  } catch (e) { /* ignore */ }
+}
+
+function migrateOldState() {
+  // Migrate legacy state (before profiles) to first profile if it exists
+  try {
+    const old = localStorage.getItem('vokabeltrainer_v1');
+    if (old) {
+      const firstKey = 'vokabeltrainer_v1_' + PROFILES[0].id;
+      if (!localStorage.getItem(firstKey)) {
+        localStorage.setItem(firstKey, old);
+      }
+      localStorage.removeItem('vokabeltrainer_v1');
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function getDefaultState() {
+  // Activate first chapter of each language by default
+  const activeChapters = {};
+  VOCAB.languages.forEach(lang => {
+    if (lang.chapters.length > 0) {
+      activeChapters[lang.chapters[0].id] = true;
+    }
+  });
+  return {
+    cardProgress: {},
+    streak: 0,
+    lastPractice: null,
+    totalReviewed: 0,
+    dailyLog: {},
+    activeChapters: activeChapters,
+    settings: { cardsPerSession: 15, direction: 'mixed', mode: 'flashcard' }
+  };
+}
+
+function loadProfileState(profileId) {
+  const p = localStorage.getItem('vokabeltrainer_v1_' + profileId);
+  if (p) { try { return JSON.parse(p); } catch(e) {} }
+  return null;
+}
+
+let state = getDefaultState();
+let currentLang = null;
+let sessionCards = [];
+let sessionIndex = 0;
+let sessionResults = { correct: 0, hard: 0, wrong: 0 };
+let isFlipped = false;
+
+// ══════════════════════════════════════════
+// Utilities
+// ══════════════════════════════════════════
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function daysBetween(dateStr1, dateStr2) {
+  const d1 = new Date(dateStr1 + 'T00:00:00');
+  const d2 = new Date(dateStr2 + 'T00:00:00');
+  return Math.round((d2 - d1) / 86400000);
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ══════════════════════════════════════════
+// Streak Calculation
+// ══════════════════════════════════════════
+function updateStreak() {
+  const t = today();
+  if (!state.lastPractice) {
+    return; // no change
+  }
+  const diff = daysBetween(state.lastPractice, t);
+  if (diff > 1) {
+    state.streak = 0;
+  }
+  // streak gets incremented on practice, not here
+}
+
+function recordPractice() {
+  const t = today();
+  if (state.lastPractice !== t) {
+    const diff = state.lastPractice ? daysBetween(state.lastPractice, t) : 999;
+    if (diff === 1) {
+      state.streak += 1;
+    } else if (diff > 1) {
+      state.streak = 1;
+    } else {
+      // same day – no change to streak unless first ever
+      if (state.streak === 0) state.streak = 1;
+    }
+    state.lastPractice = t;
+  }
+  // dailyLog
+  if (!state.dailyLog[t]) state.dailyLog[t] = 0;
+  state.dailyLog[t]++;
+  state.totalReviewed++;
+  saveState();
+}
+
+// ══════════════════════════════════════════
+// Card Progress Helpers
+// ══════════════════════════════════════════
+function getCardProgress(cardId) {
+  if (!state.cardProgress[cardId]) {
+    state.cardProgress[cardId] = {
+      box: 0,
+      nextReview: today(),
+      correct: 0,
+      wrong: 0
+    };
+  }
+  return state.cardProgress[cardId];
+}
+
+function isDue(cardId) {
+  const p = getCardProgress(cardId);
+  return p.nextReview <= today();
+}
+
+function isNew(cardId) {
+  return !state.cardProgress[cardId];
+}
+
+function updateCardProgress(cardId, rating) {
+  const p = getCardProgress(cardId);
+  const t = today();
+
+  if (rating === 'correct') {
+    p.box = Math.min(p.box + 1, MAX_BOX);
+    p.correct++;
+  } else if (rating === 'hard') {
+    p.box = Math.max(p.box - 1, 0);
+    p.correct++; // partial credit
+  } else { // wrong
+    p.box = 0;
+    p.wrong++;
+  }
+
+  p.nextReview = addDays(t, BOX_INTERVALS[p.box]);
+  saveState();
+}
+
+// ══════════════════════════════════════════
+// Session Builder
+// ══════════════════════════════════════════
+function getActiveCards(langId) {
+  const lang = VOCAB.languages.find(l => l.id === langId);
+  if (!lang) return [];
+  const cards = [];
+  lang.chapters.forEach(ch => {
+    if (state.activeChapters[ch.id]) {
+      ch.cards.forEach(c => cards.push({ ...c, chapterId: ch.id, langId: langId }));
+    }
+  });
+  return cards;
+}
+
+function cardWeight(cardId) {
+  // Higher weight = more likely to be picked
+  if (isNew(cardId)) return 10;
+  const p = getCardProgress(cardId);
+  // Base weight from box: box 0 = 10, box 5 = 0.3
+  const boxWeight = [10, 6, 3.5, 2, 1, 0.3][Math.min(p.box, MAX_BOX)];
+  // Boost for cards with many wrong answers
+  const errorRatio = p.wrong / Math.max(p.correct + p.wrong, 1);
+  const errorBoost = 1 + errorRatio * 3; // up to 4x boost
+  // Boost if overdue: the longer overdue, the higher the weight
+  const t = today();
+  const overdueDays = Math.max(0, daysBetween(p.nextReview, t));
+  const overdueBoost = 1 + Math.min(overdueDays, 14) * 0.2; // up to 3.8x
+  return boxWeight * errorBoost * overdueBoost;
+}
+
+function weightedSample(cards, n) {
+  // Weighted random sampling without replacement
+  const pool = cards.map(c => ({ card: c, weight: cardWeight(c.id) }));
+  const selected = [];
+  for (let i = 0; i < n && pool.length > 0; i++) {
+    const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
+    let r = Math.random() * totalWeight;
+    let pick = 0;
+    for (let j = 0; j < pool.length; j++) {
+      r -= pool[j].weight;
+      if (r <= 0) { pick = j; break; }
+    }
+    selected.push(pool[pick].card);
+    pool.splice(pick, 1);
+  }
+  return selected;
+}
+
+function buildSession() {
+  const cards = getActiveCards(currentLang.id);
+  const maxCards = state.settings.cardsPerSession;
+
+  // All cards mixed across all active chapters, weighted by difficulty
+  const selected = weightedSample(cards, maxCards);
+
+  // Assign direction (60% DE→foreign, 40% foreign→DE)
+  const withDirection = selected.map(c => ({
+    ...c,
+    direction: Math.random() < 0.6 ? 'de_to_foreign' : 'foreign_to_de'
+  }));
+
+  // Shuffle for final interleaving
+  return shuffle(withDirection);
+}
+
+function countDue(langId) {
+  const cards = getActiveCards(langId);
+  let due = 0;
+  let newCount = 0;
+  let weak = 0;
+  cards.forEach(c => {
+    if (isNew(c.id)) { newCount++; }
+    else if (isDue(c.id)) { due++; }
+    else {
+      // Not strictly due, but weak cards (box 0-1 or high error ratio) still count
+      const p = getCardProgress(c.id);
+      const errorRatio = p.wrong / Math.max(p.correct + p.wrong, 1);
+      if (p.box <= 1 || errorRatio > 0.4) weak++;
+    }
+  });
+  return { due, newCount, weak, total: cards.length };
+}
+
+// ══════════════════════════════════════════
+// Screen Management
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  if (id === 'screen-home') { renderHome(); renderHomeProfileBar(); }
+  if (id === 'screen-stats') renderStats();
+  if (id === 'screen-profile') renderProfileScreen();
+}
+
+// ══════════════════════════════════════════
+// RENDER: Home
+// ══════════════════════════════════════════
+function renderHome() {
+  updateStreak();
+
+  document.getElementById('home-streak').textContent = state.streak;
+
+  const container = document.getElementById('lang-cards');
+  container.innerHTML = '';
+
+  VOCAB.languages.forEach(lang => {
+    const counts = countDue(lang.id);
+    const urgentTotal = counts.due + counts.newCount + counts.weak;
+
+    const card = document.createElement('div');
+    card.className = 'lang-card';
+    card.style.borderColor = lang.color;
+    card.onclick = () => selectLanguage(lang.id);
+
+    const dueBadgeColor = urgentTotal > 0 ? lang.color : '#a8a29e';
+    const dueBadgeBg = urgentTotal > 0 ? lang.colorLight : '#f5f5f4';
+
+    let badgeText;
+    if (urgentTotal > 0) {
+      badgeText = urgentTotal + ' Karten zum Üben';
+    } else if (counts.total > 0) {
+      badgeText = 'Alles sitzt!';
+    } else {
+      badgeText = 'Keine Kapitel aktiv';
+    }
+
+    card.innerHTML = `
+      <div class="lang-flag">${lang.flag}</div>
+      <div class="lang-info">
+        <div class="lang-name">${lang.name}</div>
+        <span class="lang-due" style="background:${dueBadgeBg};color:${dueBadgeColor}">
+          ${badgeText}
+        </span>
+      </div>
+      <div class="lang-arrow">&#x203A;</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER: Chapters
+// ══════════════════════════════════════════
+function selectLanguage(langId) {
+  currentLang = VOCAB.languages.find(l => l.id === langId);
+  if (!currentLang) return;
+
+  // Set language color as CSS variable
+  document.documentElement.style.setProperty('--lang-color', currentLang.color);
+
+  const header = document.getElementById('chapter-header');
+  header.innerHTML = `
+    <div class="lang-flag">${currentLang.flag}</div>
+    <h2>${currentLang.name}</h2>
+  `;
+
+  renderChapterList();
+  renderModeToggle();
+  showScreen('screen-chapters');
+}
+
+function renderChapterList() {
+  const list = document.getElementById('chapter-list');
+  list.innerHTML = '';
+
+  currentLang.chapters.forEach(ch => {
+    const isActive = !!state.activeChapters[ch.id];
+    const total = ch.cards.length;
+    let mastered = 0;
+    ch.cards.forEach(c => {
+      const p = state.cardProgress[c.id];
+      if (p && p.box >= 3) mastered++;
+    });
+    const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+
+    const item = document.createElement('div');
+    item.className = 'chapter-item';
+    item.innerHTML = `
+      <div class="info">
+        <div class="name">${ch.name}</div>
+        <div class="progress-row">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;background:${currentLang.color}"></div>
+          </div>
+          <div class="progress-pct">${pct}%</div>
+        </div>
+      </div>
+      <div class="toggle ${isActive ? 'on' : ''}" data-chapter="${ch.id}"></div>
+    `;
+
+    const toggle = item.querySelector('.toggle');
+    toggle.onclick = (e) => {
+      e.stopPropagation();
+      state.activeChapters[ch.id] = !state.activeChapters[ch.id];
+      toggle.classList.toggle('on');
+      saveState();
+      updateDueInfo();
+    };
+
+    list.appendChild(item);
+  });
+
+  updateDueInfo();
+}
+
+function updateDueInfo() {
+  const counts = countDue(currentLang.id);
+  const info = document.getElementById('due-info');
+  const btn = document.getElementById('start-btn');
+
+  if (counts.total === 0) {
+    info.textContent = 'Kein Kapitel aktiviert';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  } else {
+    const parts = [];
+    if (counts.due > 0) parts.push(`${counts.due} fällig`);
+    if (counts.newCount > 0) parts.push(`${counts.newCount} neu`);
+    if (counts.weak > 0) parts.push(`${counts.weak} unsicher`);
+    const readyTotal = counts.due + counts.newCount + counts.weak;
+    const label = readyTotal > 0
+      ? `${counts.total} Karten (${parts.join(', ')})`
+      : `${counts.total} Karten — alles sitzt!`;
+    info.textContent = label;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+// ══════════════════════════════════════════
+// LEARN Session
+// ══════════════════════════════════════════
+function startSession() {
+  if (!currentLang) return;
+
+  sessionCards = buildSession();
+  if (sessionCards.length === 0) {
+    alert('Keine Karten zum Lernen! Aktiviere Kapitel oder komm morgen wieder.');
+    return;
+  }
+
+  sessionIndex = 0;
+  sessionResults = { correct: 0, hard: 0, wrong: 0 };
+  isFlipped = false;
+
+  showScreen('screen-learn');
+  showCard();
+}
+
+function showCard() {
+  if (sessionIndex >= sessionCards.length) {
+    finishSession();
+    return;
+  }
+
+  const card = sessionCards[sessionIndex];
+  const progress = getCardProgress(card.id);
+  const total = sessionCards.length;
+
+  // Progress
+  document.getElementById('learn-progress-text').textContent = `${sessionIndex + 1} / ${total}`;
+  const fill = document.getElementById('learn-progress-fill');
+  fill.style.width = `${((sessionIndex) / total) * 100}%`;
+  fill.style.background = currentLang.color;
+
+  // Direction
+  const isForeignToDe = card.direction === 'foreign_to_de';
+  const dirLabel = isForeignToDe
+    ? `${currentLang.name} → Deutsch`
+    : `Deutsch → ${currentLang.name}`;
+  document.getElementById('learn-direction').textContent = dirLabel;
+
+  // Card content
+  const frontWord = isForeignToDe ? card.word : card.de;
+  const backWord = isForeignToDe ? card.de : card.word;
+
+  document.getElementById('card-front-word').textContent = frontWord;
+  document.getElementById('card-front-hint').textContent = state.settings.mode === 'writing' ? 'Schreibe die Übersetzung' : 'Tippe zum Aufdecken';
+  document.getElementById('card-back-word').textContent = backWord;
+  document.getElementById('card-back-hint').textContent = isForeignToDe ? card.de : card.word;
+  // Show original on back as context (hide duplicate)
+  document.getElementById('card-back-hint').textContent = '';
+
+  document.getElementById('card-box-info').textContent = `Fach ${progress.box + 1}`;
+
+  // Reset flip
+  const flashcard = document.getElementById('flashcard');
+  flashcard.classList.remove('flipped');
+  isFlipped = false;
+
+  const isWriting = state.settings.mode === 'writing';
+  const container = document.querySelector('.flashcard-container');
+  const writeArea = document.getElementById('write-area');
+  const tapHint = document.getElementById('tap-hint');
+  const ratingBtns = document.getElementById('rating-buttons');
+
+  if (isWriting) {
+    // Writing mode: no flip, show input
+    container.style.pointerEvents = 'none';
+    container.style.cursor = 'default';
+    tapHint.classList.add('hidden');
+    ratingBtns.classList.remove('visible');
+    writeArea.classList.remove('hidden');
+
+    // Reset write area
+    const input = document.getElementById('write-input');
+    input.value = '';
+    input.disabled = false;
+    input.classList.remove('correct', 'wrong');
+    input.dataset.wasCorrect = '';
+    document.getElementById('write-submit').classList.remove('hidden');
+    document.getElementById('write-result').classList.add('hidden');
+    document.getElementById('write-next').classList.add('hidden');
+
+    // Focus input after animation
+    setTimeout(() => input.focus(), 300);
+  } else {
+    // Flashcard mode
+    container.style.pointerEvents = '';
+    container.style.cursor = '';
+    tapHint.classList.remove('hidden');
+    ratingBtns.classList.remove('visible');
+    writeArea.classList.add('hidden');
+  }
+}
+
+function flipCard() {
+  if (isFlipped) return;
+  if (state.settings.mode === 'writing') return;
+  isFlipped = true;
+
+  document.getElementById('flashcard').classList.add('flipped');
+  document.getElementById('tap-hint').classList.add('hidden');
+
+  // Show rating buttons with slight delay
+  setTimeout(() => {
+    document.getElementById('rating-buttons').classList.add('visible');
+  }, 300);
+}
+
+function rateCard(rating) {
+  const card = sessionCards[sessionIndex];
+  updateCardProgress(card.id, rating);
+  recordPractice();
+
+  sessionResults[rating]++;
+  sessionIndex++;
+
+  // Brief pause, then next card
+  isFlipped = false;
+  setTimeout(showCard, 150);
+}
+
+function confirmAbort() {
+  if (sessionIndex > 0 && sessionIndex < sessionCards.length) {
+    if (!confirm('Sitzung wirklich abbrechen?')) return;
+  }
+  showScreen('screen-home');
+}
+
+// ══════════════════════════════════════════
+// SUMMARY
+// ══════════════════════════════════════════
+function finishSession() {
+  const total = sessionResults.correct + sessionResults.hard + sessionResults.wrong;
+  const correctPct = total > 0 ? Math.round((sessionResults.correct / total) * 100) : 0;
+
+  // Emoji & title
+  let emoji, title;
+  if (correctPct >= 80) { emoji = '\uD83C\uDF89'; title = 'Fantastisch!'; }
+  else if (correctPct >= 60) { emoji = '\uD83D\uDC4D'; title = 'Gut gemacht!'; }
+  else if (correctPct >= 40) { emoji = '\uD83D\uDCAA'; title = 'Weiter so!'; }
+  else { emoji = '\uD83C\uDF31'; title = 'Übung macht den Meister!'; }
+
+  document.getElementById('summary-emoji').textContent = emoji;
+  document.getElementById('summary-title').textContent = title;
+  document.getElementById('summary-sub').textContent = `${total} Karten gelernt`;
+
+  // Stats boxes
+  const statsHtml = `
+    <div class="summary-stat green">
+      <div class="num">${sessionResults.correct}</div>
+      <div class="label">Gewusst</div>
+    </div>
+    <div class="summary-stat orange">
+      <div class="num">${sessionResults.hard}</div>
+      <div class="label">Schwer</div>
+    </div>
+    <div class="summary-stat red">
+      <div class="num">${sessionResults.wrong}</div>
+      <div class="label">Nicht gewusst</div>
+    </div>
+  `;
+  document.getElementById('summary-stats').innerHTML = statsHtml;
+
+  // Streak
+  const streakDiv = document.getElementById('summary-streak');
+  streakDiv.innerHTML = `
+    <div class="fire">&#x1F525;</div>
+    <div class="text">${state.streak} Tage Streak!</div>
+  `;
+
+  showScreen('screen-summary');
+
+  // Confetti for good results
+  if (correctPct >= 60) {
+    launchConfetti();
+  }
+}
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+function renderStats() {
+  renderBoxVisual();
+  renderCalendar();
+  renderTotalStats();
+}
+
+function renderBoxVisual() {
+  const container = document.getElementById('box-visual');
+  const boxCounts = new Array(BOX_INTERVALS.length).fill(0);
+  let totalCards = 0;
+
+  VOCAB.languages.forEach(lang => {
+    lang.chapters.forEach(ch => {
+      ch.cards.forEach(c => {
+        const p = state.cardProgress[c.id];
+        const box = p ? p.box : 0;
+        boxCounts[box]++;
+        totalCards++;
+      });
+    });
+  });
+
+  const maxCount = Math.max(...boxCounts, 1);
+  const colors = ['#ef4444', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981'];
+  const labels = ['Neu', '1 Tag', '3 Tage', '7 Tage', '21 Tage', '60 Tage'];
+
+  container.innerHTML = boxCounts.map((count, i) => {
+    const heightPct = (count / maxCount) * 100;
+    return `
+      <div class="box-bar-wrap">
+        <div class="box-bar-count">${count}</div>
+        <div class="box-bar" style="height:${Math.max(heightPct, 3)}%;background:${colors[i]}"></div>
+        <div class="box-bar-label">${labels[i]}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendar-grid');
+  const t = new Date();
+  const todayStr = today();
+
+  // Last 28 days (4 weeks)
+  const days = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(t);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const practiced = !!state.dailyLog[dateStr];
+    const isToday = dateStr === todayStr;
+    days.push({ date: dateStr, day: d.getDate(), practiced, isToday });
+  }
+
+  container.innerHTML = days.map(d => {
+    let cls = 'calendar-day';
+    if (d.practiced) cls += ' practiced';
+    if (d.isToday) cls += ' today';
+    return `<div class="${cls}">${d.day}</div>`;
+  }).join('');
+}
+
+function renderTotalStats() {
+  const container = document.getElementById('total-stats');
+  let totalCards = 0;
+  let masteredCards = 0;
+
+  VOCAB.languages.forEach(lang => {
+    lang.chapters.forEach(ch => {
+      ch.cards.forEach(c => {
+        totalCards++;
+        const p = state.cardProgress[c.id];
+        if (p && p.box >= 4) masteredCards++;
+      });
+    });
+  });
+
+  const masteredPct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+
+  container.innerHTML = `
+    <div class="total-stat">
+      <div class="num">${state.totalReviewed}</div>
+      <div class="label">Karten gelernt</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${state.streak}</div>
+      <div class="label">Tage Streak</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${masteredPct}%</div>
+      <div class="label">Gemeistert</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${Object.keys(state.dailyLog).length}</div>
+      <div class="label">Lerntage</div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+// Confetti Animation
+// ══════════════════════════════════════════
+function launchConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+
+  const colors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
+
+  for (let i = 0; i < 50; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.width = (Math.random() * 8 + 6) + 'px';
+    confetti.style.height = (Math.random() * 8 + 6) + 'px';
+    confetti.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
+    confetti.style.animationDelay = (Math.random() * 0.8) + 's';
+    container.appendChild(confetti);
+  }
+
+  setTimeout(() => container.remove(), 3500);
+}
+
+// ══════════════════════════════════════════
+// Writing Mode
+// ══════════════════════════════════════════
+function setMode(mode) {
+  state.settings.mode = mode;
+  saveState();
+  document.querySelectorAll('.mode-toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+}
+
+function renderModeToggle() {
+  const mode = state.settings.mode || 'flashcard';
+  document.querySelectorAll('.mode-toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+}
+
+function normalizeAnswer(str) {
+  // Trim and lowercase
+  let s = str.trim().toLowerCase();
+  // Remove parenthetical annotations like (f.), (m.), (fam.), (pl.), etc.
+  s = s.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  // Normalize accents: replace accented chars with base char
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return s;
+}
+
+// Levenshtein-based diff: returns array of {char, type} where type is 'ok', 'wrong', 'missing'
+function diffAnswer(userStr, correctStr) {
+  const u = userStr.split('');
+  const c = correctStr.split('');
+  const m = u.length, n = c.length;
+
+  // Build DP matrix
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (normalizeAnswer(u[i - 1]) === normalizeAnswer(c[j - 1])) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  // Backtrace to build diff
+  const ops = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && normalizeAnswer(u[i - 1]) === normalizeAnswer(c[j - 1])) {
+      ops.push({ char: c[j - 1], type: 'ok' });
+      i--; j--;
+    } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+      // Substitution: user typed wrong char
+      ops.push({ char: u[i - 1], type: 'wrong', correct: c[j - 1] });
+      i--; j--;
+    } else if (j > 0 && dp[i][j] === dp[i][j - 1] + 1) {
+      // Insertion needed: user missed this char
+      ops.push({ char: c[j - 1], type: 'missing' });
+      j--;
+    } else {
+      // Deletion: user typed extra char
+      ops.push({ char: u[i - 1], type: 'wrong' });
+      i--;
+    }
+  }
+  ops.reverse();
+  return ops;
+}
+
+function buildDiffHtml(userInput, correctRaw) {
+  const userTrimmed = userInput.trim();
+  const correctClean = correctRaw.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+
+  // Find the best matching alternative (lowest edit distance)
+  const alternatives = correctRaw.split('/').map(a => a.trim());
+  let bestAlt = alternatives[0];
+  let bestDist = Infinity;
+  alternatives.forEach(alt => {
+    const altClean = alt.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+    const d = editDistance(normalizeAnswer(userTrimmed), normalizeAnswer(altClean));
+    if (d < bestDist) {
+      bestDist = d;
+      bestAlt = alt;
+    }
+  });
+
+  const bestClean = bestAlt.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  const ratio = bestDist / Math.max(bestClean.length, 1);
+
+  // If more than 60% different, it's a completely wrong word - just show correct answer
+  if (ratio > 0.6) {
+    return '<span class="diff-label">Falsch</span>' +
+           '<span class="diff-correct-word">Richtige Antwort: ' + escapeHtml(correctRaw) + '</span>';
+  }
+
+  // Character-level diff
+  const ops = diffAnswer(userTrimmed, bestClean);
+  let html = '<span class="diff-label">Deine Eingabe:</span><span class="diff-line">';
+  ops.forEach(op => {
+    if (op.type === 'ok') {
+      html += '<span class="diff-char-ok">' + escapeHtml(op.char) + '</span>';
+    } else if (op.type === 'wrong') {
+      html += '<span class="diff-char-wrong">' + escapeHtml(op.char) + '</span>';
+      if (op.correct) {
+        html += '<span class="diff-char-missing">' + escapeHtml(op.correct) + '</span>';
+      }
+    } else if (op.type === 'missing') {
+      html += '<span class="diff-char-missing">' + escapeHtml(op.char) + '</span>';
+    }
+  });
+  html += '</span>';
+  html += '<span class="diff-correct-word">Richtig: ' + escapeHtml(bestAlt) + '</span>';
+  return html;
+}
+
+function editDistance(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+      else dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function checkAnswer() {
+  const input = document.getElementById('write-input');
+  const resultDiv = document.getElementById('write-result');
+  const submitBtn = document.getElementById('write-submit');
+  const nextBtn = document.getElementById('write-next');
+
+  const card = sessionCards[sessionIndex];
+  const isForeignToDe = card.direction === 'foreign_to_de';
+  const correctRaw = isForeignToDe ? card.de : card.word;
+
+  // Split by / for multiple accepted answers
+  const acceptedAnswers = correctRaw.split('/').map(a => normalizeAnswer(a));
+  const userAnswer = normalizeAnswer(input.value);
+
+  const isCorrect = acceptedAnswers.some(a => a === userAnswer);
+
+  // Show result
+  input.disabled = true;
+  submitBtn.classList.add('hidden');
+  resultDiv.classList.remove('hidden');
+  nextBtn.classList.remove('hidden');
+
+  // Flip the card to reveal the correct answer
+  const flashcard = document.getElementById('flashcard');
+  flashcard.classList.add('flipped');
+
+  if (isCorrect) {
+    input.classList.add('correct');
+    resultDiv.className = 'write-result correct';
+    resultDiv.textContent = 'Richtig!';
+  } else {
+    input.classList.add('wrong');
+    resultDiv.className = 'write-result wrong';
+    resultDiv.innerHTML = buildDiffHtml(input.value, correctRaw);
+  }
+
+  // Store result for nextCardAfterWrite
+  input.dataset.wasCorrect = isCorrect ? '1' : '0';
+
+  // Focus the next button
+  nextBtn.focus();
+}
+
+function nextCardAfterWrite() {
+  const input = document.getElementById('write-input');
+  const wasCorrect = input.dataset.wasCorrect === '1';
+
+  const rating = wasCorrect ? 'correct' : 'wrong';
+  const card = sessionCards[sessionIndex];
+  updateCardProgress(card.id, rating);
+  recordPractice();
+
+  sessionResults[rating]++;
+  sessionIndex++;
+
+  setTimeout(showCard, 150);
+}
+
+// ══════════════════════════════════════════
+// Profile Selection
+// ══════════════════════════════════════════
+function renderProfileScreen() {
+  const container = document.getElementById('profile-cards');
+  container.innerHTML = '';
+
+  PROFILES.forEach(profile => {
+    const profileState = loadProfileState(profile.id);
+    const streak = profileState ? profileState.streak || 0 : 0;
+    const total = profileState ? profileState.totalReviewed || 0 : 0;
+
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.onclick = () => selectProfile(profile.id);
+
+    card.innerHTML = `
+      <div class="profile-avatar" style="background:${profile.color}">${profile.emoji}</div>
+      <div>
+        <div class="profile-name">${profile.name}</div>
+        <div class="profile-streak">${total > 0 ? streak + ' Tage Streak' : 'Noch nicht gestartet'}</div>
+      </div>
+      <div class="lang-arrow">&#x203A;</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function selectProfile(profileId) {
+  currentProfile = PROFILES.find(p => p.id === profileId);
+  state = loadState() || getDefaultState();
+  if (!state.settings.mode) state.settings.mode = 'flashcard';
+  renderHome();
+  renderHomeProfileBar();
+  showScreen('screen-home');
+}
+
+function renderHomeProfileBar() {
+  if (!currentProfile) return;
+  const bar = document.getElementById('home-profile-bar');
+  bar.innerHTML = `
+    <div class="profile-avatar" style="background:${currentProfile.color}">${currentProfile.emoji}</div>
+    <div class="profile-name">${currentProfile.name}</div>
+    <button class="switch-btn" onclick="switchProfile()">Wechseln</button>
+  `;
+}
+
+function switchProfile() {
+  currentProfile = null;
+  currentLang = null;
+  renderProfileScreen();
+  showScreen('screen-profile');
+}
+
+// ══════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════
+migrateOldState();
+
+// Enter key support for write input
+document.getElementById('write-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const submitBtn = document.getElementById('write-submit');
+    const nextBtn = document.getElementById('write-next');
+    if (!submitBtn.classList.contains('hidden')) {
+      checkAnswer();
+    } else if (!nextBtn.classList.contains('hidden')) {
+      nextCardAfterWrite();
+    }
+  }
+});
+
+renderProfileScreen();
+</script>
+</body>
+</html>
