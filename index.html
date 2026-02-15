@@ -13465,7 +13465,7 @@ function buildDiffHtml(userInput, correctRaw) {
   const correctClean = correctRaw.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
 
   // Find the best matching alternative (lowest edit distance)
-  const alternatives = correctRaw.split('/').map(a => a.trim());
+  const alternatives = correctRaw.split(/[\/;]/).map(a => a.trim()).filter(a => a);
   let bestAlt = alternatives[0];
   let bestDist = Infinity;
   alternatives.forEach(alt => {
@@ -13536,8 +13536,8 @@ function checkAnswer() {
   const isForeignToDe = card.direction === 'foreign_to_de';
   const correctRaw = isForeignToDe ? card.de : card.word;
 
-  // Split by / for multiple accepted answers
-  const acceptedAnswers = correctRaw.split('/').map(a => normalizeAnswer(a));
+  // Split by / or ; for multiple accepted answers
+  const acceptedAnswers = correctRaw.split(/[\/;]/).map(a => normalizeAnswer(a)).filter(a => a);
   const userAnswer = normalizeAnswer(input.value);
 
   const isCorrect = acceptedAnswers.some(a => a === userAnswer);
