@@ -443,6 +443,65 @@ h3 { font-size: 1.1rem; font-weight: 600; }
 .calendar-day.empty { background: transparent; }
 .calendar-day.future { opacity: 0.3; }
 
+.known-card {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.known-big {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--green);
+}
+.known-sub {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+.known-bar {
+  height: 12px;
+  background: var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.known-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--green), #4ade80);
+  transition: width 0.6s ease;
+}
+.known-per-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.known-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+.known-lang-row .flag { font-size: 1.2rem; flex-shrink: 0; }
+.known-lang-row .name { flex: 1; font-weight: 600; }
+.known-lang-row .count { color: var(--text-light); white-space: nowrap; }
+.known-lang-bar {
+  flex: 2;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.known-lang-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
 .total-stats {
   display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
 }
@@ -836,6 +895,11 @@ h3 { font-size: 1.1rem; font-weight: 600; }
   <div id="screen-stats" class="screen">
     <button class="back-btn" onclick="showScreen('screen-home')">Zurück</button>
     <h2 class="mb-8">Statistik</h2>
+
+    <div class="stats-section">
+      <h3>&#x2705; Gekonnte Vokabeln</h3>
+      <div class="known-card" id="known-card"></div>
+    </div>
 
     <div class="stats-section">
       <h3>&#x1F4E6; Fächer-Verteilung</h3>
@@ -13264,6 +13328,7 @@ function finishSession() {
 // STATS
 // ══════════════════════════════════════════
 function renderStats() {
+  renderKnownStats();
   renderBoxVisual();
   renderCalendar();
   renderTotalStats();
@@ -13325,22 +13390,53 @@ function renderCalendar() {
   }).join('');
 }
 
-function renderTotalStats() {
-  const container = document.getElementById('total-stats');
-  let totalCards = 0;
-  let masteredCards = 0;
+function renderKnownStats() {
+  const container = document.getElementById('known-card');
+  let totalAll = 0;
+  let knownAll = 0;
+  const perLang = [];
 
   VOCAB.languages.forEach(lang => {
+    let total = 0;
+    let known = 0;
     lang.chapters.forEach(ch => {
       ch.cards.forEach(c => {
-        totalCards++;
+        total++;
+        totalAll++;
         const p = state.cardProgress[c.id];
-        if (p && p.box >= 4) masteredCards++;
+        if (p && p.correct >= 1) { known++; knownAll++; }
       });
     });
+    perLang.push({ name: lang.name, flag: lang.flag, color: lang.color, total, known });
   });
 
-  const masteredPct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+  const pct = totalAll > 0 ? Math.round((knownAll / totalAll) * 100) : 0;
+
+  let langRows = perLang.map(l => {
+    const lPct = l.total > 0 ? Math.round((l.known / l.total) * 100) : 0;
+    return `
+      <div class="known-lang-row">
+        <span class="flag">${l.flag}</span>
+        <span class="name">${l.name}</span>
+        <div class="known-lang-bar">
+          <div class="known-lang-bar-fill" style="width:${lPct}%;background:${l.color}"></div>
+        </div>
+        <span class="count">${l.known}/${l.total}</span>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="known-big">${knownAll} von ${totalAll}</div>
+    <div class="known-sub">Vokabeln schon mindestens 1x gewusst (${pct}%)</div>
+    <div class="known-bar">
+      <div class="known-bar-fill" style="width:${pct}%"></div>
+    </div>
+    <div class="known-per-lang">${langRows}</div>
+  `;
+}
+
+function renderTotalStats() {
+  const container = document.getElementById('total-stats');
 
   container.innerHTML = `
     <div class="total-stat">
@@ -13350,10 +13446,6 @@ function renderTotalStats() {
     <div class="total-stat">
       <div class="num">${state.streak}</div>
       <div class="label">Tage Streak</div>
-    </div>
-    <div class="total-stat">
-      <div class="num">${masteredPct}%</div>
-      <div class="label">Gemeistert</div>
     </div>
     <div class="total-stat">
       <div class="num">${Object.keys(state.dailyLog).length}</div>
