@@ -12831,7 +12831,7 @@ function getDefaultState() {
     totalReviewed: 0,
     dailyLog: {},
     activeChapters: activeChapters,
-    settings: { cardsPerSession: 15, direction: 'mixed', mode: 'flashcard' }
+    settings: { cardsPerSession: 30, direction: 'mixed', mode: 'flashcard' }
   };
 }
 
@@ -13589,6 +13589,25 @@ function normalizeAnswer(str) {
   return s;
 }
 
+function stripArticle(str) {
+  // Remove leading articles (DE, EN, FR) and return just the noun
+  const articles = [
+    // German
+    'der ', 'die ', 'das ', 'den ', 'dem ', 'des ', 'ein ', 'eine ', 'einem ', 'einer ', 'eines ', 'einen ',
+    // French
+    'le ', 'la ', 'les ', "l'", 'un ', 'une ', 'des ', 'du ', 'au ', 'aux ',
+    // English
+    'the ', 'a ', 'an '
+  ];
+  const lower = str.toLowerCase();
+  for (const art of articles) {
+    if (lower.startsWith(art)) {
+      return str.slice(art.length).trim();
+    }
+  }
+  return str;
+}
+
 // Levenshtein-based diff: returns array of {char, type} where type is 'ok', 'wrong', 'missing'
 function diffAnswer(userStr, correctStr) {
   const u = userStr.split('');
@@ -13711,10 +13730,17 @@ function checkAnswer() {
   const correctRaw = isForeignToDe ? card.de : card.word;
 
   // Split by / or ; for multiple accepted answers
-  const acceptedAnswers = correctRaw.split(/[\/;]/).map(a => normalizeAnswer(a)).filter(a => a);
+  const alternatives = correctRaw.split(/[\/;]/).map(a => a.trim()).filter(a => a);
   const userAnswer = normalizeAnswer(input.value);
+  const userAnswerNoArt = normalizeAnswer(stripArticle(input.value.trim()));
 
-  const isCorrect = acceptedAnswers.some(a => a === userAnswer);
+  // Accept if full answer matches OR answer without article matches
+  const isCorrect = alternatives.some(alt => {
+    const full = normalizeAnswer(alt);
+    const noArt = normalizeAnswer(stripArticle(alt));
+    return userAnswer === full || userAnswer === noArt
+        || userAnswerNoArt === full || userAnswerNoArt === noArt;
+  });
 
   // Show result
   input.disabled = true;
