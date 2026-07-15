@@ -565,6 +565,61 @@ h3 { font-size: 1.1rem; font-weight: 600; }
 .diff-missing { color: #9ca3af; font-style: italic; }
 .feedback-wrong-line  { margin-bottom: 4px; font-size: 1.05rem; }
 .feedback-correct-line { font-size: 0.9rem; color: #16a34a; font-weight: 600; }
+
+/* ── DaF Grammatik Modus ──────────────────── */
+.daf-home-card {
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+.daf-module-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 10px; cursor: pointer;
+  transition: box-shadow .15s;
+}
+.daf-module-item:active { box-shadow: var(--shadow); }
+.daf-module-icon { font-size: 1.7rem; width: 36px; text-align: center; }
+.daf-module-info { flex: 1; }
+.daf-module-name { font-weight: 700; font-size: 1rem; color: var(--text); }
+.daf-module-sub  { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+.daf-badge {
+  font-size: 0.75rem; font-weight: 600;
+  padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+}
+
+/* Karussell */
+.kar-score-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 16px 0; font-size: 0.95rem; font-weight: 600; color: var(--text-light);
+}
+.kar-timer {
+  font-size: 1.5rem; font-weight: 800; color: var(--text);
+  min-width: 32px; text-align: right;
+  transition: color .3s;
+}
+.kar-timer.urgent { color: var(--red); }
+.kar-card {
+  margin: 12px 16px 0;
+  background: var(--bg-card); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 20px;
+  text-align: center;
+}
+.kar-kasus-label {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: #f59e0b; margin-bottom: 14px;
+}
+.kar-phrase { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 12px; }
+.kar-chip {
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 0.95rem; font-weight: 600;
+}
+.kar-chip-verb   { background: #e0f2fe; color: #0369a1; }
+.kar-chip-art    { background: #fce7f3; color: #9d174d; }
+.kar-chip-adj    { background: #f3e8ff; color: #6b21a8; }
+.kar-chip-nomen  { background: #dcfce7; color: #166534; }
+.kar-hint { font-size: 0.82rem; color: var(--text-light); }
+.kar-next { margin: 12px 16px 0; }
 </style>
 </head>
 <body>
@@ -718,6 +773,154 @@ h3 { font-size: 1.1rem; font-weight: 600; }
     <div class="stats-section">
       <h3>&#x1F4CA; Gesamt</h3>
       <div class="total-stats" id="total-stats"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════ DaF HOME ═══════ -->
+  <div id="screen-daf-home" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-home')">Zurück</button>
+    <div class="chapter-header">
+      <div class="lang-flag">&#x1F1E9;&#x1F1EA;</div>
+      <h2>Deutsch Grammatik</h2>
+    </div>
+    <div style="padding:0 16px">
+      <button class="btn btn-secondary" onclick="showScreen('screen-daf-stats')">
+        &#x1F4CA; Fortschritt
+      </button>
+    </div>
+    <div id="daf-module-list" style="padding:12px 16px 16px"></div>
+  </div>
+
+  <!-- ═══════ DaF STATS ═══════ -->
+  <div id="screen-daf-stats" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-daf-home')">Zurück</button>
+    <h2 class="mb-8">DaF-Fortschritt</h2>
+
+    <div class="stats-section">
+      <h3>&#x1F4E6; Fächer-Verteilung</h3>
+      <div class="card">
+        <div class="box-visual" id="daf-box-visual"></div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h3>&#x1F4C5; Letzte 30 Tage</h3>
+      <div class="card">
+        <div class="calendar-grid" id="daf-calendar-grid"></div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h3>&#x1F4CA; Gesamt</h3>
+      <div class="total-stats" id="daf-total-stats"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ DaF LEARN ═══════ -->
+  <div id="screen-daf-learn" class="screen">
+    <div class="learn-top">
+      <div class="learn-progress-text" id="daf-progress-text">1 / 25</div>
+      <button class="learn-close" onclick="abortDafSession()">&times;</button>
+    </div>
+    <div class="learn-progress-bar">
+      <div class="learn-progress-fill" id="daf-progress-fill"></div>
+    </div>
+    <div class="learn-direction" id="daf-module-label"></div>
+
+    <div class="flashcard-container" onclick="dafFlipCard()">
+      <div class="flashcard" id="daf-flashcard">
+        <div class="flashcard-face flashcard-front">
+          <div class="flashcard-box-info" id="daf-box-info"></div>
+          <div class="flashcard-word" id="daf-front-word"></div>
+          <button class="speak-btn" id="speak-daf-front-btn"
+                  onclick="event.stopPropagation(); speakDafFront()" title="Vorlesen">&#x1F50A;</button>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="flashcard-word" id="daf-back-word"></div>
+          <div class="flashcard-hint" id="daf-back-info"></div>
+          <button class="speak-btn" id="speak-daf-back-btn"
+                  onclick="event.stopPropagation(); speakDafBack()" title="Vorlesen">&#x1F50A;</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tap-hint" id="daf-tap-hint">Tippe zum Aufdecken</div>
+
+    <div class="answer-input-row" id="daf-input-row">
+      <input type="text" id="daf-answer-input" placeholder="Antwort eingeben …"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter')submitDafAnswer()">
+      <button class="answer-submit-btn" onclick="submitDafAnswer()">&#x2713;</button>
+    </div>
+    <div class="answer-feedback" id="daf-feedback"></div>
+
+    <div class="rating-buttons" id="daf-rating-buttons">
+      <button class="rating-btn wrong" onclick="rateDafCard('wrong')">
+        <span class="emoji">&#x274C;</span><span>Wusste<br>ich nicht</span>
+      </button>
+      <button class="rating-btn hard" onclick="rateDafCard('hard')">
+        <span class="emoji">&#x1F914;</span><span>War<br>schwer</span>
+      </button>
+      <button class="rating-btn correct" onclick="rateDafCard('correct')">
+        <span class="emoji">&#x2705;</span><span>Gewusst!</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ DaF SUMMARY ═══════ -->
+  <div id="screen-daf-summary" class="screen">
+    <div class="summary-header">
+      <div class="summary-emoji" id="daf-sum-emoji">&#x1F389;</div>
+      <div class="summary-title" id="daf-sum-title">Super!</div>
+      <div class="summary-sub" id="daf-sum-sub"></div>
+    </div>
+    <div class="summary-stats" id="daf-sum-stats"></div>
+    <div class="summary-actions">
+      <button class="btn btn-primary btn-full" onclick="startDafSession(dafCurrentModuleId)">
+        Nochmal üben
+      </button>
+      <button class="btn btn-secondary btn-full" onclick="showScreen('screen-daf-home')">
+        Zurück zur Übersicht
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ DaF KARUSSELL ═══════ -->
+  <div id="screen-daf-karussell" class="screen">
+    <div class="learn-top">
+      <div class="learn-progress-text" id="kar-round-text">Runde 1 / 10</div>
+      <button class="learn-close" onclick="endKarussell(true)">&times;</button>
+    </div>
+    <div class="learn-progress-bar">
+      <div class="learn-progress-fill" id="kar-progress-fill" style="background:#f59e0b"></div>
+    </div>
+
+    <div class="kar-score-row">
+      <span>Punkte: <strong id="kar-score">0</strong></span>
+      <span id="kar-timer" class="kar-timer">15</span>
+    </div>
+
+    <div class="kar-card">
+      <div class="kar-kasus-label" id="kar-kasus">Akkusativ</div>
+      <div class="kar-phrase">
+        <span class="kar-chip kar-chip-verb"  id="kar-verb">Ich sehe</span>
+        <span class="kar-chip kar-chip-art"   id="kar-art-raw">ein</span>
+        <span class="kar-chip kar-chip-adj"   id="kar-adj-raw">alt___</span>
+        <span class="kar-chip kar-chip-nomen" id="kar-nomen">Hund (der)</span>
+      </div>
+      <div class="kar-hint">Bilde die korrekte Phrase! (z.B. <em>einen alten Hund</em>)</div>
+    </div>
+
+    <div class="answer-input-row" style="margin-top:14px">
+      <input type="text" id="kar-input" placeholder="Artikel + Adjektiv + Nomen …"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter')submitKarussellAnswer()">
+      <button class="answer-submit-btn" onclick="submitKarussellAnswer()">&#x2713;</button>
+    </div>
+    <div class="answer-feedback" id="kar-feedback"></div>
+    <div class="kar-next hidden" id="kar-next">
+      <button class="btn btn-primary btn-full" onclick="showKarussellRound()">Weiter ›</button>
     </div>
   </div>
 
@@ -17740,6 +17943,909 @@ const VOCAB = {
     }
   ]
 };
+const DAF   = {
+  "modules": [
+    {
+      "id": "artikel",
+      "name": "Artikel & Genus",
+      "cards": [
+        {
+          "id": "a01",
+          "frage": "Baum",
+          "antwort": "der Baum",
+          "info": "Pl: die Bäume"
+        },
+        {
+          "id": "a02",
+          "frage": "Blume",
+          "antwort": "die Blume",
+          "info": "Pl: die Blumen"
+        },
+        {
+          "id": "a03",
+          "frage": "Wald",
+          "antwort": "der Wald",
+          "info": "Pl: die Wälder"
+        },
+        {
+          "id": "a04",
+          "frage": "Berg",
+          "antwort": "der Berg",
+          "info": "Pl: die Berge"
+        },
+        {
+          "id": "a05",
+          "frage": "Fluss",
+          "antwort": "der Fluss",
+          "info": "Pl: die Flüsse"
+        },
+        {
+          "id": "a06",
+          "frage": "Meer",
+          "antwort": "das Meer",
+          "info": "Pl: die Meere"
+        },
+        {
+          "id": "a07",
+          "frage": "See",
+          "antwort": "der See",
+          "info": "Pl: die Seen"
+        },
+        {
+          "id": "a08",
+          "frage": "Sonne",
+          "antwort": "die Sonne",
+          "info": "kein Plural"
+        },
+        {
+          "id": "a09",
+          "frage": "Mond",
+          "antwort": "der Mond",
+          "info": "kein Plural"
+        },
+        {
+          "id": "a10",
+          "frage": "Stern",
+          "antwort": "der Stern",
+          "info": "Pl: die Sterne"
+        },
+        {
+          "id": "a11",
+          "frage": "Hund",
+          "antwort": "der Hund",
+          "info": "Pl: die Hunde"
+        },
+        {
+          "id": "a12",
+          "frage": "Katze",
+          "antwort": "die Katze",
+          "info": "Pl: die Katzen"
+        },
+        {
+          "id": "a13",
+          "frage": "Vogel",
+          "antwort": "der Vogel",
+          "info": "Pl: die Vögel"
+        },
+        {
+          "id": "a14",
+          "frage": "Pferd",
+          "antwort": "das Pferd",
+          "info": "Pl: die Pferde"
+        },
+        {
+          "id": "a15",
+          "frage": "Fisch",
+          "antwort": "der Fisch",
+          "info": "Pl: die Fische"
+        },
+        {
+          "id": "a16",
+          "frage": "Haus",
+          "antwort": "das Haus",
+          "info": "Pl: die Häuser"
+        },
+        {
+          "id": "a17",
+          "frage": "Zimmer",
+          "antwort": "das Zimmer",
+          "info": "Pl: die Zimmer"
+        },
+        {
+          "id": "a18",
+          "frage": "Tisch",
+          "antwort": "der Tisch",
+          "info": "Pl: die Tische"
+        },
+        {
+          "id": "a19",
+          "frage": "Stuhl",
+          "antwort": "der Stuhl",
+          "info": "Pl: die Stühle"
+        },
+        {
+          "id": "a20",
+          "frage": "Fenster",
+          "antwort": "das Fenster",
+          "info": "Pl: die Fenster"
+        },
+        {
+          "id": "a21",
+          "frage": "Tür",
+          "antwort": "die Tür",
+          "info": "Pl: die Türen"
+        },
+        {
+          "id": "a22",
+          "frage": "Bett",
+          "antwort": "das Bett",
+          "info": "Pl: die Betten"
+        },
+        {
+          "id": "a23",
+          "frage": "Küche",
+          "antwort": "die Küche",
+          "info": "Pl: die Küchen"
+        },
+        {
+          "id": "a24",
+          "frage": "Schrank",
+          "antwort": "der Schrank",
+          "info": "Pl: die Schränke"
+        },
+        {
+          "id": "a25",
+          "frage": "Auto",
+          "antwort": "das Auto",
+          "info": "Pl: die Autos"
+        },
+        {
+          "id": "a26",
+          "frage": "Schule",
+          "antwort": "die Schule",
+          "info": "Pl: die Schulen"
+        },
+        {
+          "id": "a27",
+          "frage": "Heft",
+          "antwort": "das Heft",
+          "info": "Pl: die Hefte"
+        },
+        {
+          "id": "a28",
+          "frage": "Stift",
+          "antwort": "der Stift",
+          "info": "Pl: die Stifte"
+        },
+        {
+          "id": "a29",
+          "frage": "Buch",
+          "antwort": "das Buch",
+          "info": "Pl: die Bücher"
+        },
+        {
+          "id": "a30",
+          "frage": "Tasche",
+          "antwort": "die Tasche",
+          "info": "Pl: die Taschen"
+        },
+        {
+          "id": "a31",
+          "frage": "Arm",
+          "antwort": "der Arm",
+          "info": "Pl: die Arme"
+        },
+        {
+          "id": "a32",
+          "frage": "Hand",
+          "antwort": "die Hand",
+          "info": "Pl: die Hände"
+        },
+        {
+          "id": "a33",
+          "frage": "Bein",
+          "antwort": "das Bein",
+          "info": "Pl: die Beine"
+        },
+        {
+          "id": "a34",
+          "frage": "Kopf",
+          "antwort": "der Kopf",
+          "info": "Pl: die Köpfe"
+        },
+        {
+          "id": "a35",
+          "frage": "Gesicht",
+          "antwort": "das Gesicht",
+          "info": "Pl: die Gesichter"
+        },
+        {
+          "id": "a36",
+          "frage": "Nase",
+          "antwort": "die Nase",
+          "info": "Pl: die Nasen"
+        },
+        {
+          "id": "a37",
+          "frage": "Auge",
+          "antwort": "das Auge",
+          "info": "Pl: die Augen"
+        },
+        {
+          "id": "a38",
+          "frage": "Ohr",
+          "antwort": "das Ohr",
+          "info": "Pl: die Ohren"
+        },
+        {
+          "id": "a39",
+          "frage": "Welt",
+          "antwort": "die Welt",
+          "info": "kein Plural"
+        },
+        {
+          "id": "a40",
+          "frage": "Wetter",
+          "antwort": "das Wetter",
+          "info": "kein Plural"
+        },
+        {
+          "id": "a41",
+          "frage": "Zeit",
+          "antwort": "die Zeit",
+          "info": "Pl: die Zeiten"
+        },
+        {
+          "id": "a42",
+          "frage": "Luft",
+          "antwort": "die Luft",
+          "info": "kein Plural"
+        }
+      ]
+    },
+    {
+      "id": "adjektiv",
+      "name": "Adjektivendungen",
+      "cards": [
+        {
+          "id": "adj01",
+          "frage": "Der alt___ Mann sitzt dort.",
+          "antwort": "alte",
+          "info": "Nominativ • maskulin • bestimmter Artikel → -e"
+        },
+        {
+          "id": "adj02",
+          "frage": "Die klein___ Katze schläft.",
+          "antwort": "kleine",
+          "info": "Nominativ • feminin • bestimmter Artikel → -e"
+        },
+        {
+          "id": "adj03",
+          "frage": "Das groß___ Haus steht am See.",
+          "antwort": "große",
+          "info": "Nominativ • neutrum • bestimmter Artikel → -e"
+        },
+        {
+          "id": "adj04",
+          "frage": "Ich sehe den jung___ Mann.",
+          "antwort": "jungen",
+          "info": "Akkusativ • maskulin • bestimmter Artikel → -en"
+        },
+        {
+          "id": "adj05",
+          "frage": "Sie kauft die rot___ Jacke.",
+          "antwort": "rote",
+          "info": "Akkusativ • feminin • bestimmter Artikel → -e"
+        },
+        {
+          "id": "adj06",
+          "frage": "Er liest das interessant___ Buch.",
+          "antwort": "interessante",
+          "info": "Akkusativ • neutrum • bestimmter Artikel → -e"
+        },
+        {
+          "id": "adj07",
+          "frage": "Ich habe einen gut___ Freund.",
+          "antwort": "guten",
+          "info": "Akkusativ • maskulin • unbestimmter Artikel → -en"
+        },
+        {
+          "id": "adj08",
+          "frage": "Sie trägt eine schön___ Mütze.",
+          "antwort": "schöne",
+          "info": "Akkusativ • feminin • unbestimmter Artikel → -e"
+        },
+        {
+          "id": "adj09",
+          "frage": "Er kauft ein neu___ Fahrrad.",
+          "antwort": "neues",
+          "info": "Akkusativ • neutrum • unbestimmter Artikel → -es (Signal fehlt im Artikel!)"
+        },
+        {
+          "id": "adj10",
+          "frage": "Er hilft dem klein___ Kind.",
+          "antwort": "kleinen",
+          "info": "Dativ • neutrum • bestimmter Artikel → -en"
+        },
+        {
+          "id": "adj11",
+          "frage": "Ich spreche mit der nett___ Lehrerin.",
+          "antwort": "netten",
+          "info": "Dativ • feminin • bestimmter Artikel → -en"
+        },
+        {
+          "id": "adj12",
+          "frage": "Wir fahren mit dem alt___ Auto.",
+          "antwort": "alten",
+          "info": "Dativ • neutrum • bestimmter Artikel → -en"
+        },
+        {
+          "id": "adj13",
+          "frage": "Er winkt dem groß___ Mann.",
+          "antwort": "großen",
+          "info": "Dativ • maskulin • bestimmter Artikel → -en"
+        },
+        {
+          "id": "adj14",
+          "frage": "Er hilft einem alt___ Mann.",
+          "antwort": "alten",
+          "info": "Dativ • maskulin • unbestimmter Artikel → -en"
+        },
+        {
+          "id": "adj15",
+          "frage": "Sie wohnt in einer klein___ Wohnung.",
+          "antwort": "kleinen",
+          "info": "Dativ • feminin • unbestimmter Artikel → -en"
+        },
+        {
+          "id": "adj16",
+          "frage": "Ich schreibe mit einem gut___ Stift.",
+          "antwort": "guten",
+          "info": "Dativ • neutrum • unbestimmter Artikel → -en"
+        },
+        {
+          "id": "adj17",
+          "frage": "Ein jung___ Hund läuft vorbei.",
+          "antwort": "junger",
+          "info": "Nominativ • maskulin • unbestimmter Artikel → -er (Signal fehlt!)"
+        },
+        {
+          "id": "adj18",
+          "frage": "Eine groß___ Katze sitzt da.",
+          "antwort": "große",
+          "info": "Nominativ • feminin • unbestimmter Artikel → -e"
+        },
+        {
+          "id": "adj19",
+          "frage": "Ein alt___ Haus steht dort.",
+          "antwort": "altes",
+          "info": "Nominativ • neutrum • unbestimmter Artikel → -es (Signal fehlt!)"
+        },
+        {
+          "id": "adj20",
+          "frage": "Ich trinke kalt___ Wasser.",
+          "antwort": "kaltes",
+          "info": "Akkusativ • neutrum • kein Artikel → starke Endung -es"
+        },
+        {
+          "id": "adj21",
+          "frage": "Heiß___ Kaffee schmeckt gut.",
+          "antwort": "Heißer",
+          "info": "Nominativ • maskulin • kein Artikel → starke Endung -er"
+        },
+        {
+          "id": "adj22",
+          "frage": "Ich habe schön___ Sachen.",
+          "antwort": "schöne",
+          "info": "Akkusativ • Plural • kein Artikel → -e"
+        },
+        {
+          "id": "adj23",
+          "frage": "Mit einem schnell___ Zug fahren wir.",
+          "antwort": "schnellen",
+          "info": "Dativ • maskulin • unbestimmter Artikel → -en"
+        },
+        {
+          "id": "adj24",
+          "frage": "Das ist ein lang___ Film.",
+          "antwort": "langer",
+          "info": "Nominativ • maskulin • unbestimmter Artikel → -er"
+        },
+        {
+          "id": "adj25",
+          "frage": "Wir besuchen die alt___ Stadt.",
+          "antwort": "alte",
+          "info": "Akkusativ • feminin • bestimmter Artikel → -e"
+        }
+      ]
+    },
+    {
+      "id": "praepositionen",
+      "name": "Präpositionen",
+      "cards": [
+        {
+          "id": "p01",
+          "frage": "sich freuen ___ (auf etwas Zukünftiges)",
+          "antwort": "auf + Akkusativ",
+          "info": "Ich freue mich auf den Urlaub."
+        },
+        {
+          "id": "p02",
+          "frage": "sich freuen ___ (über etwas Vergangenes/Gegenwärtiges)",
+          "antwort": "über + Akkusativ",
+          "info": "Ich freue mich über das Geschenk."
+        },
+        {
+          "id": "p03",
+          "frage": "warten ___",
+          "antwort": "auf + Akkusativ",
+          "info": "Wir warten auf den Bus."
+        },
+        {
+          "id": "p04",
+          "frage": "denken ___",
+          "antwort": "an + Akkusativ",
+          "info": "Ich denke an dich."
+        },
+        {
+          "id": "p05",
+          "frage": "sich ärgern ___",
+          "antwort": "über + Akkusativ",
+          "info": "Er ärgert sich über den Fehler."
+        },
+        {
+          "id": "p06",
+          "frage": "sprechen ___ (Thema)",
+          "antwort": "über + Akkusativ",
+          "info": "Wir sprechen über das Problem."
+        },
+        {
+          "id": "p07",
+          "frage": "sich interessieren ___",
+          "antwort": "für + Akkusativ",
+          "info": "Sie interessiert sich für Musik."
+        },
+        {
+          "id": "p08",
+          "frage": "helfen ___",
+          "antwort": "bei + Dativ",
+          "info": "Sie hilft mir bei der Aufgabe."
+        },
+        {
+          "id": "p09",
+          "frage": "zweifeln ___",
+          "antwort": "an + Dativ",
+          "info": "Er zweifelt an seiner Entscheidung."
+        },
+        {
+          "id": "p10",
+          "frage": "teilnehmen ___",
+          "antwort": "an + Dativ",
+          "info": "Wir nehmen am Kurs teil."
+        },
+        {
+          "id": "p11",
+          "frage": "fahren ___ (Verkehrsmittel)",
+          "antwort": "mit + Dativ",
+          "info": "Ich fahre mit dem Bus."
+        },
+        {
+          "id": "p12",
+          "frage": "gehen ___ (Richtung Person/Ort)",
+          "antwort": "zu + Dativ",
+          "info": "Ich gehe zur Schule."
+        },
+        {
+          "id": "p13",
+          "frage": "kommen ___ (Herkunft)",
+          "antwort": "aus + Dativ",
+          "info": "Er kommt aus Deutschland."
+        },
+        {
+          "id": "p14",
+          "frage": "beginnen ___",
+          "antwort": "mit + Dativ",
+          "info": "Wir beginnen mit dem Unterricht."
+        },
+        {
+          "id": "p15",
+          "frage": "lachen ___",
+          "antwort": "über + Akkusativ",
+          "info": "Sie lachen über den Witz."
+        },
+        {
+          "id": "p16",
+          "frage": "träumen ___",
+          "antwort": "von + Dativ",
+          "info": "Er träumt von einem Abenteuer."
+        },
+        {
+          "id": "p17",
+          "frage": "sich erinnern ___",
+          "antwort": "an + Akkusativ",
+          "info": "Ich erinnere mich an den Urlaub."
+        },
+        {
+          "id": "p18",
+          "frage": "suchen ___ (etwas Bestimmtes)",
+          "antwort": "nach + Dativ",
+          "info": "Er sucht nach dem Schlüssel."
+        },
+        {
+          "id": "p19",
+          "frage": "fragen ___ (Weg/Info)",
+          "antwort": "nach + Dativ",
+          "info": "Sie fragt nach dem Weg."
+        },
+        {
+          "id": "p20",
+          "frage": "bestehen ___ (zusammengesetzt sein)",
+          "antwort": "aus + Dativ",
+          "info": "Wasser besteht aus H₂O."
+        },
+        {
+          "id": "p21",
+          "frage": "sich kümmern ___",
+          "antwort": "um + Akkusativ",
+          "info": "Sie kümmert sich um das Kind."
+        },
+        {
+          "id": "p22",
+          "frage": "abhängen ___",
+          "antwort": "von + Dativ",
+          "info": "Das hängt vom Wetter ab."
+        },
+        {
+          "id": "p23",
+          "frage": "sich vorbereiten ___",
+          "antwort": "auf + Akkusativ",
+          "info": "Ich bereite mich auf die Prüfung vor."
+        },
+        {
+          "id": "p24",
+          "frage": "gehören ___ (Teil von etwas sein)",
+          "antwort": "zu + Dativ",
+          "info": "Das gehört zur Aufgabe."
+        },
+        {
+          "id": "p25",
+          "frage": "sich beschweren ___",
+          "antwort": "über + Akkusativ",
+          "info": "Er beschwert sich über den Lärm."
+        }
+      ]
+    },
+    {
+      "id": "verben",
+      "name": "Verbwortschatz",
+      "cards": [
+        {
+          "id": "v01",
+          "frage": "leise und heimlich sprechen",
+          "antwort": "flüstern",
+          "info": "Er flüstert, damit niemand es hört."
+        },
+        {
+          "id": "v02",
+          "frage": "Informationen/Neuigkeiten weitergeben",
+          "antwort": "berichten",
+          "info": "Sie berichtet über den Ausflug."
+        },
+        {
+          "id": "v03",
+          "frage": "etwas ohne Beweis sagen",
+          "antwort": "behaupten",
+          "info": "Er behauptet, der Beste zu sein."
+        },
+        {
+          "id": "v04",
+          "frage": "jemandem etwas verständlich machen",
+          "antwort": "erklären",
+          "info": "Die Lehrerin erklärt den Stoff."
+        },
+        {
+          "id": "v05",
+          "frage": "einen Fehler offen zugeben",
+          "antwort": "zugeben",
+          "info": "Er gibt zu, dass er falsch lag."
+        },
+        {
+          "id": "v06",
+          "frage": "kurz/nebenbei ansprechen",
+          "antwort": "erwähnen",
+          "info": "Sie erwähnte seinen Namen beiläufig."
+        },
+        {
+          "id": "v07",
+          "frage": "leise und langsam gehen (Katze, Dieb)",
+          "antwort": "schleichen",
+          "info": "Die Katze schleicht durch das Gras."
+        },
+        {
+          "id": "v08",
+          "frage": "sich sehr beeilen (zu spät!)",
+          "antwort": "eilen",
+          "info": "Sie eilt zur Schule, weil sie spät ist."
+        },
+        {
+          "id": "v09",
+          "frage": "entspannt und langsam spazieren",
+          "antwort": "schlendern",
+          "info": "Wir schlendern durch die Altstadt."
+        },
+        {
+          "id": "v10",
+          "frage": "in kleinen Sprüngen gehen (vor Freude)",
+          "antwort": "hüpfen",
+          "info": "Das Kind hüpft vor Freude."
+        },
+        {
+          "id": "v11",
+          "frage": "mit Händen und Füßen hochsteigen",
+          "antwort": "klettern",
+          "info": "Er klettert auf den Baum."
+        },
+        {
+          "id": "v12",
+          "frage": "plötzlich und unkontrolliert fallen",
+          "antwort": "stürzen",
+          "info": "Er stürzt vom Fahrrad."
+        },
+        {
+          "id": "v13",
+          "frage": "nachdenken, bevor man handelt",
+          "antwort": "überlegen",
+          "info": "Ich überlege, bevor ich antworte."
+        },
+        {
+          "id": "v14",
+          "frage": "nicht sicher sein, was wahr ist",
+          "antwort": "vermuten",
+          "info": "Ich vermute, dass er krank ist."
+        },
+        {
+          "id": "v15",
+          "frage": "plötzlich etwas wahrnehmen",
+          "antwort": "bemerken",
+          "info": "Sie bemerkt, dass etwas nicht stimmt."
+        },
+        {
+          "id": "v16",
+          "frage": "endlich verstehen / als solches erkennen",
+          "antwort": "erkennen",
+          "info": "Er erkennt seinen Fehler sofort."
+        },
+        {
+          "id": "v17",
+          "frage": "Angst vor etwas/jemandem haben",
+          "antwort": "fürchten",
+          "info": "Das Kind fürchtet den großen Hund."
+        },
+        {
+          "id": "v18",
+          "frage": "Scham empfinden wegen eines Fehlers",
+          "antwort": "sich schämen",
+          "info": "Er schämt sich für seinen Fehler."
+        },
+        {
+          "id": "v19",
+          "frage": "eine Aufgabe vollständig abschließen",
+          "antwort": "erledigen",
+          "info": "Ich erledige meine Hausaufgaben."
+        },
+        {
+          "id": "v20",
+          "frage": "ein Wort in einem Buch/Lexikon suchen",
+          "antwort": "nachschlagen",
+          "info": "Ich schlage das Wort im Duden nach."
+        },
+        {
+          "id": "v21",
+          "frage": "das Wichtigste kurz darstellen",
+          "antwort": "zusammenfassen",
+          "info": "Fasse den Text in drei Sätzen zusammen!"
+        },
+        {
+          "id": "v22",
+          "frage": "Unterschiede und Gemeinsamkeiten finden",
+          "antwort": "vergleichen",
+          "info": "Vergleiche die beiden Texte!"
+        },
+        {
+          "id": "v23",
+          "frage": "eine Meinung mit Gründen stützen",
+          "antwort": "begründen",
+          "info": "Begründe deine Antwort!"
+        },
+        {
+          "id": "v24",
+          "frage": "nochmals kontrollieren, ob richtig",
+          "antwort": "überprüfen",
+          "info": "Überprüfe deine Lösung!"
+        },
+        {
+          "id": "v25",
+          "frage": "Flüssigkeit in ein Gefäß geben",
+          "antwort": "einschenken / eingießen",
+          "info": "Er schenkt das Wasser ein."
+        },
+        {
+          "id": "v26",
+          "frage": "in Wasser verschwinden (Salz, Zucker)",
+          "antwort": "sich auflösen",
+          "info": "Das Salz löst sich im Wasser auf."
+        },
+        {
+          "id": "v27",
+          "frage": "etwas kaufen und mitbringen",
+          "antwort": "besorgen",
+          "info": "Kannst du Brot besorgen?"
+        },
+        {
+          "id": "v28",
+          "frage": "sorgfältig reinigen",
+          "antwort": "säubern / putzen",
+          "info": "Sie putzt das Zimmer gründlich."
+        },
+        {
+          "id": "v29",
+          "frage": "aus dem Schlaf heraustreten",
+          "antwort": "aufwachen",
+          "info": "Er wacht um 7 Uhr auf."
+        },
+        {
+          "id": "v30",
+          "frage": "etwas vorsichtig an eine bestimmte Stelle bringen",
+          "antwort": "platzieren",
+          "info": "Sie platziert die Vase auf dem Tisch."
+        }
+      ]
+    }
+  ],
+  "karussell": {
+    "verben": {
+      "nom": [
+        "Das ist",
+        "Hier steht",
+        "Dort liegt",
+        "Es gibt",
+        "Das war"
+      ],
+      "nom_plural": [
+        "Das sind",
+        "Hier stehen",
+        "Dort liegen",
+        "Das waren"
+      ],
+      "akk": [
+        "Ich sehe",
+        "Er kauft",
+        "Sie hat",
+        "Wir suchen",
+        "Ich mag",
+        "Er findet",
+        "Sie braucht",
+        "Wir besuchen"
+      ],
+      "dat": [
+        "Ich helfe",
+        "Er begegnet",
+        "Sie dankt",
+        "Er folgt",
+        "Ich vertraue"
+      ]
+    },
+    "adjektive": [
+      "alt",
+      "groß",
+      "klein",
+      "neu",
+      "schön",
+      "lang",
+      "kurz",
+      "warm",
+      "kalt",
+      "hell",
+      "blau",
+      "laut",
+      "stark",
+      "frisch",
+      "jung"
+    ],
+    "nomen": [
+      {
+        "wort": "Hund",
+        "genus": "m",
+        "plural": "Hunde"
+      },
+      {
+        "wort": "Baum",
+        "genus": "m",
+        "plural": "Bäume"
+      },
+      {
+        "wort": "Tisch",
+        "genus": "m",
+        "plural": "Tische"
+      },
+      {
+        "wort": "Mann",
+        "genus": "m",
+        "plural": "Männer"
+      },
+      {
+        "wort": "Lehrer",
+        "genus": "m",
+        "plural": "Lehrer"
+      },
+      {
+        "wort": "Freund",
+        "genus": "m",
+        "plural": "Freunde"
+      },
+      {
+        "wort": "Katze",
+        "genus": "f",
+        "plural": "Katzen"
+      },
+      {
+        "wort": "Blume",
+        "genus": "f",
+        "plural": "Blumen"
+      },
+      {
+        "wort": "Stadt",
+        "genus": "f",
+        "plural": "Städte"
+      },
+      {
+        "wort": "Frau",
+        "genus": "f",
+        "plural": "Frauen"
+      },
+      {
+        "wort": "Tasche",
+        "genus": "f",
+        "plural": "Taschen"
+      },
+      {
+        "wort": "Schule",
+        "genus": "f",
+        "plural": "Schulen"
+      },
+      {
+        "wort": "Haus",
+        "genus": "n",
+        "plural": "Häuser"
+      },
+      {
+        "wort": "Kind",
+        "genus": "n",
+        "plural": "Kinder"
+      },
+      {
+        "wort": "Buch",
+        "genus": "n",
+        "plural": "Bücher"
+      },
+      {
+        "wort": "Auto",
+        "genus": "n",
+        "plural": "Autos"
+      },
+      {
+        "wort": "Tier",
+        "genus": "n",
+        "plural": "Tiere"
+      },
+      {
+        "wort": "Zimmer",
+        "genus": "n",
+        "plural": "Zimmer"
+      }
+    ]
+  }
+};
 
 // ══════════════════════════════════════════
 // Profile & State Management
@@ -17788,7 +18894,7 @@ function getDefaultState() {
     totalReviewed: 0,
     dailyLog: {},
     activeChapters: activeChapters,
-    settings: { cardsPerSession: 15, direction: 'mixed' }
+    settings: { direction: 'mixed' }
   };
 }
 
@@ -17944,19 +19050,17 @@ function getActiveCards(langId) {
 
 function buildSession() {
   const cards = getActiveCards(currentLang.id);
-  const maxCards = state.settings.cardsPerSession;
 
+  // Fällige Karten: niedrigste Box zuerst (dringendste Wiederholung vorne)
   const dueCards = cards.filter(c => !isNew(c.id) && isDue(c.id));
-  const newCards = cards.filter(c => isNew(c.id));
-
   dueCards.sort((a, b) => getCardProgress(a.id).box - getCardProgress(b.id).box);
 
-  let selected = dueCards.slice(0, maxCards);
-  if (selected.length < maxCards) {
-    selected = selected.concat(newCards.slice(0, maxCards - selected.length));
-  }
+  // Neue Karten (noch nie gesehen)
+  const newCards = cards.filter(c => isNew(c.id));
 
-  selected = selected.map(c => ({
+  // Alle zusammen, kein Limit – falsch beantwortete Karten (box=0, nextReview=heute)
+  // landen automatisch wieder in dueCards der nächsten Sitzung
+  const selected = [...dueCards, ...newCards].map(c => ({
     ...c,
     direction: Math.random() < 0.6 ? 'de_to_foreign' : 'foreign_to_de'
   }));
@@ -17984,6 +19088,8 @@ function showScreen(id) {
   if (id === 'screen-profiles') renderProfiles();
   if (id === 'screen-home') renderHome();
   if (id === 'screen-stats') renderStats();
+  if (id === 'screen-daf-home') renderDafHome();
+  if (id === 'screen-daf-stats') renderDafStats();
 }
 
 // ══════════════════════════════════════════
@@ -18000,7 +19106,7 @@ function renderHome() {
 
   currentProfile.languages.forEach(lang => {
     const counts = countDue(lang.id);
-    const dueTotal = counts.due + Math.min(counts.newCount, state.settings.cardsPerSession);
+    const dueTotal = counts.due + counts.newCount;
 
     const card = document.createElement('div');
     card.className = 'lang-card';
@@ -18022,6 +19128,26 @@ function renderHome() {
     `;
     container.appendChild(card);
   });
+
+  // DaF-Grammatik Karte (für alle Nutzer)
+  const dafDue = countDafDueAll();
+  const dafCard = document.createElement('div');
+  dafCard.className = 'lang-card daf-home-card';
+  dafCard.style.borderColor = '#f59e0b';
+  dafCard.onclick = () => showScreen('screen-daf-home');
+  const dafBadgeColor = dafDue > 0 ? '#d97706' : '#a8a29e';
+  const dafBadgeBg    = dafDue > 0 ? '#fef3c7' : '#f5f5f4';
+  dafCard.innerHTML = `
+    <div class="lang-flag">&#x1F1E9;&#x1F1EA;</div>
+    <div class="lang-info">
+      <div class="lang-name">Deutsch Grammatik</div>
+      <span class="lang-due" style="background:${dafBadgeBg};color:${dafBadgeColor}">
+        ${dafDue > 0 ? dafDue + ' Karten fällig' : 'Alles gelernt!'}
+      </span>
+    </div>
+    <div class="lang-arrow">&#x203A;</div>
+  `;
+  container.appendChild(dafCard);
 }
 
 // ══════════════════════════════════════════
@@ -18089,7 +19215,7 @@ function renderChapterList() {
 
 function updateDueInfo() {
   const counts = countDue(currentLang.id);
-  const dueTotal = counts.due + Math.min(counts.newCount, state.settings.cardsPerSession);
+  const dueTotal = counts.due + counts.newCount;
   const info = document.getElementById('due-info');
   const btn = document.getElementById('start-btn');
 
@@ -18573,6 +19699,548 @@ function speakBack() {
   const text     = isForeignToDe ? card.de : card.word;
   const langCode = isForeignToDe ? 'de-DE' : getTTSLang(card.langId);
   speakText(text, langCode, 'speak-back-btn');
+}
+
+function speakDafFront() {
+  const card = dafCards[dafIndex];
+  if (!card) return;
+  speakText(card.frage, 'de-DE', 'speak-daf-front-btn');
+}
+
+function speakDafBack() {
+  const card = dafCards[dafIndex];
+  if (!card) return;
+  speakText(card.antwort, 'de-DE', 'speak-daf-back-btn');
+}
+
+// ══════════════════════════════════════════
+// DaF – Grammatik Modus
+// ══════════════════════════════════════════
+
+// Deklinationstabelle: [artikel, adjektiv-endung]
+const DEKL = {
+  best: {
+    m:  { nom:['der','e'],   akk:['den','en'],   dat:['dem','en']  },
+    f:  { nom:['die','e'],   akk:['die','e'],    dat:['der','en']  },
+    n:  { nom:['das','e'],   akk:['das','e'],    dat:['dem','en']  },
+  },
+  unbest: {
+    m:  { nom:['ein','er'],  akk:['einen','en'], dat:['einem','en'] },
+    f:  { nom:['eine','e'],  akk:['eine','e'],   dat:['einer','en'] },
+    n:  { nom:['ein','es'],  akk:['ein','es'],   dat:['einem','en'] },
+  }
+};
+
+// Plural-Deklination: gilt fuer alle Genera gleich (kein Genus-Unterschied im Plural).
+// "best" = bestimmter Artikel (die), "ohne" = kein Artikel (starke Endung, z.B. "schoene Blumen")
+// Unbestimmter Artikel existiert im Plural nicht (kein "eine" im Plural).
+const DEKL_PLURAL = {
+  best: { nom:['die','en'], akk:['die','en'], dat:['den','en'] },
+  ohne: { nom:['','e'],     akk:['','e'],     dat:['','en']    },
+};
+
+// Dativ Plural: Nomen bekommt -n, ausser es endet schon auf -n oder -s
+// (z.B. Kinder -> Kindern, aber Autos -> Autos, Katzen -> Katzen)
+function datPluralForm(word) {
+  return /[ns]$/.test(word) ? word : word + 'n';
+}
+
+const DAF_META = {
+  artikel:        { icon:'&#x1F4D8;', color:'#3b82f6', colorLight:'#dbeafe' },
+  adjektiv:       { icon:'&#x270D;&#xFE0F;', color:'#8b5cf6', colorLight:'#ede9fe' },
+  praepositionen: { icon:'&#x1F517;', color:'#f59e0b', colorLight:'#fef3c7' },
+  verben:         { icon:'&#x1F4AC;', color:'#10b981', colorLight:'#d1fae5' },
+};
+
+// State
+let dafState = null;
+
+function dafKey(userId) { return `vokabeltrainer_${userId}_daf_v1`; }
+
+function getDefaultDafState() {
+  return { cardProgress:{}, streak:0, lastPractice:null, totalReviewed:0, dailyLog:{}, karBestScore:0 };
+}
+
+function loadDafState() {
+  if (!currentProfile) return getDefaultDafState();
+  try {
+    const s = localStorage.getItem(dafKey(currentProfile.id));
+    if (s) {
+      const parsed = JSON.parse(s);
+      // Abwaertskompatibel: fehlende Felder aus alten States ergaenzen
+      return Object.assign(getDefaultDafState(), parsed);
+    }
+  } catch(e) {}
+  return getDefaultDafState();
+}
+
+function saveDafState() {
+  if (!currentProfile || !dafState) return;
+  try { localStorage.setItem(dafKey(currentProfile.id), JSON.stringify(dafState)); } catch(e) {}
+}
+
+function recordDafPractice() {
+  const t = today();
+  if (dafState.lastPractice !== t) {
+    const diff = dafState.lastPractice ? daysBetween(dafState.lastPractice, t) : 999;
+    if (diff === 1) {
+      dafState.streak += 1;
+    } else if (diff > 1) {
+      dafState.streak = 1;
+    } else if (dafState.streak === 0) {
+      dafState.streak = 1;
+    }
+    dafState.lastPractice = t;
+  }
+  if (!dafState.dailyLog[t]) dafState.dailyLog[t] = 0;
+  dafState.dailyLog[t]++;
+  dafState.totalReviewed++;
+}
+
+function countDafDue(moduleId) {
+  if (!dafState) return 0;
+  const mod = DAF.modules.find(m => m.id === moduleId);
+  if (!mod) return 0;
+  const t = today();
+  return mod.cards.filter(c => {
+    const p = dafState.cardProgress[c.id];
+    return !p || p.nextReview <= t;
+  }).length;
+}
+
+function countDafDueAll() {
+  if (!currentProfile) return 0;
+  if (!dafState) dafState = loadDafState();
+  return DAF.modules.reduce((sum, mod) => sum + countDafDue(mod.id), 0);
+}
+
+// ── DaF Home ─────────────────────────────────────
+function renderDafHome() {
+  if (!currentProfile) { showScreen('screen-profiles'); return; }
+  if (!dafState) dafState = loadDafState();
+
+  const list = document.getElementById('daf-module-list');
+  list.innerHTML = '';
+
+  DAF.modules.forEach(mod => {
+    const meta = DAF_META[mod.id];
+    const due = countDafDue(mod.id);
+    const total = mod.cards.length;
+    let mastered = 0;
+    mod.cards.forEach(c => {
+      const p = dafState.cardProgress[c.id];
+      if (p && p.box >= 3) mastered++;
+    });
+    const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+    const badgeColor = due > 0 ? meta.color : '#a8a29e';
+    const badgeBg    = due > 0 ? meta.colorLight : '#f5f5f4';
+
+    const item = document.createElement('div');
+    item.className = 'daf-module-item';
+    item.onclick = () => startDafSession(mod.id);
+    item.innerHTML = `
+      <div class="daf-module-icon">${meta.icon}</div>
+      <div class="daf-module-info">
+        <div class="daf-module-name">${mod.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <div class="progress-bar" style="flex:1;max-width:120px">
+            <div class="progress-fill" style="width:${pct}%;background:${meta.color}"></div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--text-light)">${pct}%</span>
+        </div>
+      </div>
+      <span class="daf-badge" style="background:${badgeBg};color:${badgeColor}">
+        ${due > 0 ? due + ' fällig' : 'Fertig!'}
+      </span>
+    `;
+    list.appendChild(item);
+  });
+
+  // Karussell-Karte
+  const karItem = document.createElement('div');
+  karItem.className = 'daf-module-item';
+  karItem.onclick = startKarussell;
+  karItem.innerHTML = `
+    <div class="daf-module-icon">&#x1F3A1;</div>
+    <div class="daf-module-info">
+      <div class="daf-module-name">Grammatikkarussell</div>
+      <div class="daf-module-sub">Spiel: Sätze deklinieren unter Zeitdruck (10 Runden)</div>
+    </div>
+    <div class="lang-arrow">&#x203A;</div>
+  `;
+  list.appendChild(karItem);
+}
+
+// ── DaF Lern-Session ─────────────────────────────
+let dafCurrentModuleId = null;
+let dafCards = [];
+let dafIndex = 0;
+let dafResults = { correct:0, hard:0, wrong:0 };
+let dafFlipped = false;
+
+function startDafSession(moduleId) {
+  if (!dafState) dafState = loadDafState();
+  dafCurrentModuleId = moduleId;
+  const mod = DAF.modules.find(m => m.id === moduleId);
+  if (!mod) return;
+
+  const meta = DAF_META[moduleId];
+  document.documentElement.style.setProperty('--lang-color', meta.color);
+
+  const t = today();
+  dafCards = shuffle(mod.cards.filter(c => {
+    const p = dafState.cardProgress[c.id];
+    return !p || p.nextReview <= t;
+  }));
+
+  if (dafCards.length === 0) {
+    alert('Alle Karten gemeistert! Komm morgen wieder. &#x1F389;');
+    return;
+  }
+
+  dafIndex = 0;
+  dafResults = { correct:0, hard:0, wrong:0 };
+  dafFlipped = false;
+  showScreen('screen-daf-learn');
+  showDafCard();
+}
+
+function showDafCard() {
+  if (dafIndex >= dafCards.length) { finishDafSession(); return; }
+
+  const card = dafCards[dafIndex];
+  const mod  = DAF.modules.find(m => m.id === dafCurrentModuleId);
+  const meta = DAF_META[dafCurrentModuleId];
+  const p    = dafState.cardProgress[card.id] || { box:0 };
+  const total = dafCards.length;
+
+  document.getElementById('daf-progress-text').textContent = `${dafIndex+1} / ${total}`;
+  const fill = document.getElementById('daf-progress-fill');
+  fill.style.width   = `${(dafIndex / total) * 100}%`;
+  fill.style.background = meta.color;
+  document.getElementById('daf-module-label').textContent = mod.name;
+  document.getElementById('daf-box-info').textContent     = `Fach ${p.box+1}`;
+  document.getElementById('daf-front-word').textContent   = card.frage;
+  document.getElementById('daf-back-word').textContent    = card.antwort;
+  document.getElementById('daf-back-info').textContent    = card.info || '';
+
+  const fc = document.getElementById('daf-flashcard');
+  fc.style.transition = 'none';
+  fc.classList.remove('flipped');
+  void fc.offsetWidth;
+  fc.style.transition = '';
+  dafFlipped = false;
+
+  document.getElementById('daf-answer-input').value = '';
+  document.getElementById('daf-input-row').classList.remove('hidden');
+  document.getElementById('daf-feedback').textContent = '';
+  document.getElementById('daf-feedback').className = 'answer-feedback';
+  document.getElementById('daf-rating-buttons').classList.remove('visible');
+  document.getElementById('daf-tap-hint').classList.remove('hidden');
+  setTimeout(() => document.getElementById('daf-answer-input').focus(), 80);
+}
+
+function dafFlipCard() {
+  if (dafFlipped) return;
+  dafFlipped = true;
+  document.getElementById('daf-flashcard').classList.add('flipped');
+  document.getElementById('daf-tap-hint').classList.add('hidden');
+  document.getElementById('daf-input-row').classList.add('hidden');
+  document.getElementById('daf-rating-buttons').classList.add('visible');
+}
+
+function submitDafAnswer() {
+  if (dafFlipped) return;
+  const card  = dafCards[dafIndex];
+  const input = document.getElementById('daf-answer-input').value.trim();
+  if (!input) return;
+
+  const correct = card.antwort.trim();
+  const isOk    = input.toLowerCase() === correct.toLowerCase();
+  const fb      = document.getElementById('daf-feedback');
+
+  if (isOk) {
+    fb.innerHTML = '<span class="feedback-correct-line">&#x2713; Richtig!</span>';
+    fb.className = 'answer-feedback feedback-correct';
+  } else {
+    fb.innerHTML = `<div class="feedback-wrong-line">&#x2717; ${input}</div><div class="feedback-correct-line">&#x2192; ${correct}</div>`;
+    fb.className = 'answer-feedback';
+  }
+
+  document.getElementById('daf-input-row').classList.add('hidden');
+  document.getElementById('daf-tap-hint').classList.add('hidden');
+  document.getElementById('daf-flashcard').classList.add('flipped');
+  dafFlipped = true;
+  document.getElementById('daf-rating-buttons').classList.add('visible');
+}
+
+function rateDafCard(rating) {
+  const card = dafCards[dafIndex];
+  const p    = dafState.cardProgress[card.id] || { box:0 };
+
+  if (rating === 'correct') {
+    dafResults.correct++;
+    p.box = Math.min(p.box + 1, MAX_BOX);
+  } else if (rating === 'hard') {
+    dafResults.hard++;
+    p.box = Math.max(0, p.box - 1);
+  } else {
+    dafResults.wrong++;
+    p.box = 0;
+  }
+  p.nextReview = addDays(today(), BOX_INTERVALS[p.box]);
+  dafState.cardProgress[card.id] = p;
+  recordDafPractice();
+  saveDafState();
+  dafIndex++;
+  showDafCard();
+}
+
+function abortDafSession() {
+  if (confirm('Sitzung beenden?')) showScreen('screen-daf-home');
+}
+
+function finishDafSession() {
+  const { correct, hard, wrong } = dafResults;
+  const total = correct + hard + wrong;
+  const pct   = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  document.getElementById('daf-sum-emoji').textContent = pct >= 80 ? '&#x1F389;' : pct >= 50 ? '&#x1F44D;' : '&#x1F4AA;';
+  document.getElementById('daf-sum-title').textContent = pct >= 80 ? 'Ausgezeichnet!' : pct >= 50 ? 'Gut gemacht!' : 'Weiter üben!';
+  document.getElementById('daf-sum-sub').textContent   = `${total} Karten geübt`;
+  document.getElementById('daf-sum-stats').innerHTML   = `
+    <div class="summary-stat"><span class="stat-val correct">${correct}</span><span class="stat-label">Gewusst</span></div>
+    <div class="summary-stat"><span class="stat-val hard">${hard}</span><span class="stat-label">Schwer</span></div>
+    <div class="summary-stat"><span class="stat-val wrong">${wrong}</span><span class="stat-label">Falsch</span></div>
+  `;
+  showScreen('screen-daf-summary');
+}
+
+// ── DaF Statistik ─────────────────────────────────
+function renderDafStats() {
+  if (!dafState) dafState = loadDafState();
+  renderDafBoxVisual();
+  renderDafCalendar();
+  renderDafTotalStats();
+}
+
+function renderDafBoxVisual() {
+  const container = document.getElementById('daf-box-visual');
+  const boxCounts = new Array(BOX_INTERVALS.length).fill(0);
+
+  DAF.modules.forEach(mod => {
+    mod.cards.forEach(c => {
+      const p = dafState.cardProgress[c.id];
+      boxCounts[p ? p.box : 0]++;
+    });
+  });
+
+  const maxCount = Math.max(...boxCounts, 1);
+  const colors = ['#ef4444', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981'];
+  const labels = ['Neu', '1 Tag', '3 Tage', '7 Tage', '21 Tage', '60 Tage'];
+
+  container.innerHTML = boxCounts.map((count, i) => {
+    const heightPct = (count / maxCount) * 100;
+    return `
+      <div class="box-bar-wrap">
+        <div class="box-bar-count">${count}</div>
+        <div class="box-bar" style="height:${Math.max(heightPct, 3)}%;background:${colors[i]}"></div>
+        <div class="box-bar-label">${labels[i]}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderDafCalendar() {
+  const container = document.getElementById('daf-calendar-grid');
+  const t = new Date();
+  const todayStr = today();
+
+  const days = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(t);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    days.push({
+      date: dateStr,
+      day: d.getDate(),
+      practiced: !!dafState.dailyLog[dateStr],
+      isToday: dateStr === todayStr,
+    });
+  }
+
+  container.innerHTML = days.map(d => {
+    let cls = 'calendar-day';
+    if (d.practiced) cls += ' practiced';
+    if (d.isToday) cls += ' today';
+    return `<div class="${cls}">${d.day}</div>`;
+  }).join('');
+}
+
+function renderDafTotalStats() {
+  const container = document.getElementById('daf-total-stats');
+  let totalCards = 0, masteredCards = 0;
+
+  DAF.modules.forEach(mod => {
+    mod.cards.forEach(c => {
+      totalCards++;
+      const p = dafState.cardProgress[c.id];
+      if (p && p.box >= 4) masteredCards++;
+    });
+  });
+
+  const masteredPct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+
+  container.innerHTML = `
+    <div class="total-stat">
+      <div class="num">${dafState.totalReviewed}</div>
+      <div class="label">Karten gelernt</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${dafState.streak}</div>
+      <div class="label">Tage Streak</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${masteredPct}%</div>
+      <div class="label">Gemeistert</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${Object.keys(dafState.dailyLog).length}</div>
+      <div class="label">Lerntage</div>
+    </div>
+    <div class="total-stat">
+      <div class="num">${dafState.karBestScore} / ${KAR_ROUNDS}</div>
+      <div class="label">Karussell Bestleistung</div>
+    </div>
+  `;
+}
+
+// ── Grammatikkarussell ────────────────────────────
+let karScore  = 0;
+let karRound  = 0;
+let karTimer  = null;
+let karTimeLeft = 15;
+let karCorrectAnswer = '';
+const KAR_ROUNDS = 10;
+
+function startKarussell() {
+  karScore = 0;
+  karRound = 0;
+  document.getElementById('kar-score').textContent = '0';
+  document.documentElement.style.setProperty('--lang-color', '#f59e0b');
+  showScreen('screen-daf-karussell');
+  showKarussellRound();
+}
+
+function showKarussellRound() {
+  if (karRound >= KAR_ROUNDS) { endKarussell(false); return; }
+  karRound++;
+
+  document.getElementById('kar-round-text').textContent = `Runde ${karRound} / ${KAR_ROUNDS}`;
+  document.getElementById('kar-progress-fill').style.width = `${((karRound-1) / KAR_ROUNDS) * 100}%`;
+  document.getElementById('kar-feedback').textContent = '';
+  document.getElementById('kar-feedback').className   = 'answer-feedback';
+  document.getElementById('kar-next').classList.add('hidden');
+  document.getElementById('kar-input').value = '';
+
+  const kar       = DAF.karussell;
+  const adj       = kar.adjektive[Math.floor(Math.random() * kar.adjektive.length)];
+  const nomenObj  = kar.nomen[Math.floor(Math.random() * kar.nomen.length)];
+  const kasusKeys = ['nom','akk','dat'];
+  const kasus     = kasusKeys[Math.floor(Math.random() * 3)];
+
+  // ~35% der Runden im Plural, Rest Singular (Singular bleibt Schwerpunkt)
+  const isPlural  = Math.random() < 0.35;
+  const artTyp    = isPlural
+      ? (Math.random() < 0.5 ? 'best' : 'ohne')
+      : (Math.random() < 0.5 ? 'best' : 'unbest');
+
+  let verb, artForm, adjEnd, nounAnswer, nounDisplay;
+
+  if (isPlural) {
+    const verbList = kasus === 'nom' ? kar.verben.nom_plural : kar.verben[kasus];
+    verb = verbList[Math.floor(Math.random() * verbList.length)];
+    [artForm, adjEnd] = DEKL_PLURAL[artTyp][kasus];
+    nounAnswer  = kasus === 'dat' ? datPluralForm(nomenObj.plural) : nomenObj.plural;
+    nounDisplay = `${nomenObj.plural} (Plural)`;
+  } else {
+    const verbList = kar.verben[kasus];
+    verb = verbList[Math.floor(Math.random() * verbList.length)];
+    const dekl = DEKL[artTyp][nomenObj.genus];
+    if (!dekl) { showKarussellRound(); return; }
+    [artForm, adjEnd] = dekl[kasus];
+    nounAnswer  = nomenObj.wort;
+    nounDisplay = `${nomenObj.wort} (${ {m:'der', f:'die', n:'das'}[nomenObj.genus] })`;
+  }
+
+  karCorrectAnswer = `${artForm} ${adj}${adjEnd} ${nounAnswer}`.trim();
+
+  const kasusLabel = { nom:'Nominativ', akk:'Akkusativ', dat:'Dativ' }[kasus];
+
+  document.getElementById('kar-kasus').textContent   = kasusLabel + (isPlural ? ' · Plural' : '');
+  document.getElementById('kar-verb').textContent    = verb;
+  document.getElementById('kar-art-raw').textContent = isPlural
+      ? (artTyp === 'best' ? 'die' : '– (kein Artikel)')
+      : (artTyp === 'best' ? 'der/die/das' : 'ein/eine');
+  document.getElementById('kar-adj-raw').textContent = adj + '___';
+  document.getElementById('kar-nomen').textContent   = nounDisplay;
+
+  clearInterval(karTimer);
+  karTimeLeft = 15;
+  const timerEl = document.getElementById('kar-timer');
+  timerEl.textContent = karTimeLeft;
+  timerEl.classList.remove('urgent');
+
+  karTimer = setInterval(() => {
+    karTimeLeft--;
+    timerEl.textContent = karTimeLeft;
+    if (karTimeLeft <= 5) timerEl.classList.add('urgent');
+    if (karTimeLeft <= 0) {
+      clearInterval(karTimer);
+      showKarussellFeedback(false, '');
+    }
+  }, 1000);
+
+  setTimeout(() => document.getElementById('kar-input').focus(), 80);
+}
+
+function submitKarussellAnswer() {
+  clearInterval(karTimer);
+  const input = document.getElementById('kar-input').value.trim();
+  const isOk  = input.toLowerCase() === karCorrectAnswer.toLowerCase();
+  showKarussellFeedback(isOk, input);
+}
+
+function showKarussellFeedback(isOk, input) {
+  clearInterval(karTimer);
+  const fb = document.getElementById('kar-feedback');
+  if (isOk) {
+    karScore++;
+    document.getElementById('kar-score').textContent = karScore;
+    fb.textContent = '&#x2713; Richtig! +1 Punkt';
+    fb.className   = 'answer-feedback feedback-correct';
+  } else {
+    const prefix = input ? `&#x2717; ${input}` : '&#x23F1; Zeit!';
+    fb.innerHTML = `<div class="feedback-wrong-line">${prefix}</div><div class="feedback-correct-line">&#x2192; ${karCorrectAnswer}</div>`;
+    fb.className = 'answer-feedback';
+  }
+  fb.innerHTML += ` <button class="speak-btn" id="speak-kar-btn" onclick="speakText(karCorrectAnswer,'de-DE','speak-kar-btn')" title="Vorlesen">&#x1F50A;</button>`;
+  document.getElementById('kar-next').classList.remove('hidden');
+}
+
+function endKarussell(aborted) {
+  clearInterval(karTimer);
+  if (!aborted) {
+    if (!dafState) dafState = loadDafState();
+    recordDafPractice();
+    if (karScore > dafState.karBestScore) dafState.karBestScore = karScore;
+    saveDafState();
+
+    const pct = Math.round((karScore / KAR_ROUNDS) * 100);
+    const msg = pct >= 80 ? 'Ausgezeichnet! &#x1F389;' : pct >= 50 ? 'Gut gemacht! &#x1F44D;' : 'Weiter üben! &#x1F4AA;';
+    alert(`Karussell beendet!\nPunkte: ${karScore} / ${KAR_ROUNDS} (${pct}%)\n${msg}`);
+  }
+  showScreen('screen-daf-home');
 }
 
 // ══════════════════════════════════════════
